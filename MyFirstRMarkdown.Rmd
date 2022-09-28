@@ -1,0 +1,23 @@
+---
+title: "myFirstMarkdown.R"
+author: "Vishal"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+animals <- c("Tiger", "Lion", "Snake", "Ostrich", "Elephant")
+
+num_legs <- c(4, 4, 0, 2, 4)
+
+animals_df <- data.frame(animals, num_legs)
+
+```
+
+```{r}
+print(animals_df)
+```
