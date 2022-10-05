@@ -1,0 +1,198 @@
+---
+title: "Assignment 2"
+author: "Vishal"
+date: "2022-10-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading Packages
+
+```{r, echo=FALSE}
+library(tidyverse)
+library(Stat2Data)
+data("Hawks")
+```
+
+# Data Wrangling
+## 1.1 Select and filter
+
+### Q1. 
+
+```{r}
+hSF <- Hawks %>%
+  filter(Species == "RT" & Weight >= 1000) %>%
+  select(Wing, Weight, Tail)
+
+print(head(hSF))
+```
+
+### Q2.
+There are 3 features named Wing, Weight, and Tail in the hSF data frame. There are 398 examples after filtering the data with the given specifications.
+
+## Join and rename functions
+
+### Q1. 
+``` {r}
+species_code <- c("CH", "RT", "SS")
+species_name_full <- c("Cooper's", "Red-tailed", " Sharp-shinned")
+hawkSpeciesNameCodes <- data.frame(species_code, species_name_full)
+```
+
+### Q2.
+
+```{r}
+colnames(Hawks)[7] <- "species_code" 
+
+hawksFullName <- Hawks %>%
+  left_join(hawkSpeciesNameCodes, by = "species_code") %>%
+  select(-species_code) 
+```
+
+### Q3.
+```{r}
+hawksFullName <- hawksFullName %>%
+  select(species_name_full, Wing, Weight) %>%
+  print(head(hawksFullName), 7)
+```
+## 1.4
+###
+
+```{r}
+data("Hawks")
+Hawks$bird_BMI <- 1000 * (Hawks$Weight / ((Hawks$Wing) ^ 2))
+
+Hawks <- Hawks %>%
+  select(Species, bird_BMI)
+
+head(Hawks)
+```
+## 1.5
+### Q1.
+
+```{r}
+new_df <- hawksFullName %>%
+  group_by(species_name_full) %>%
+  dplyr::summarize(num_rows = n(),
+                   mn_wing = mean(Wing),
+                   md_wing = median(Wing),
+                   t_mn_wing = mean(Wing, trim = 0.1),
+                   b_wt_ratio = max((Wing / Weight), na.rm = T))  
+
+new_df
+```
+
+### Q2.
+```{r}
+data("Hawks")
+
+df2 <- Hawks %>%
+  select(Species, Wing, Weight, Culmen, Hallux, Tail, StandardTail, Tarsus, Crop) %>%
+  group_by(Species) %>%
+  dplyr::summarise(across(everything(), ~ sum(is.na(.))))
+
+df2  
+```
+## 2. Tidy data and iteration
+### Q1.
+To use map_dbl, we need dplyr library.
+
+### Q2.
+
+```{r}
+impute_by_median <- function(x) {
+  md <- median(x, na.rm = T)
+  impute_f <- function(z) {
+    if(is.na(z)) {
+      return(md)
+    } else {
+      return(z)
+    }
+  }
+  return(map_dbl(x, impute_f))
+}
+
+V <- c(1, 2, NA, 4)
+impute_by_median(V)
+
+```
+### Q3.
+
+```{r}
+x <- seq(0, 10, by = 0.1)
+y <- seq(1, 51, by = 0.5)
+
+df_xy <- data.frame(x, y)
+head(df_xy)
+
+df_xy %>%
+  mutate(z = map2_dbl(x, y, sum))
+  
+```
+
+### Q4.
+```{r}
+sometimes_missing <- function(index, value) {
+  if (index %% 5 == 0) {
+    return(NA)
+  } else {
+    return(value)
+  }
+}
+
+sometimes_missing(15, 25)
+
+
+X <- seq(0, 10, 0.1)
+
+Y = seq(1, 51, 0.5)
+
+df_xy_missing <- data.frame(X, Y)
+
+df_xy_missing <- df_xy_missing %>%
+  mutate(Z = map2_dbl(X, Y, sum)) 
+
+df_xy_missing$Z[df_xy_missing$Z %% 5 == 0] <- NA
+df_xy_missing <- select(df_xy_missing, c(X, Z))
+
+df_xy_missing
+
+
+```
+
+### Q5.
+```{r}
+x <- seq(0, 10, 0.1)
+y <- df_xy_missing$Z
+
+Z_new <- impute_by_median(y)
+
+df3 <- data.frame(x, Z_new)
+df3
+
+```
+## 2.2 Tidying data with pivot functions
+
+```{r}
+library(readxl)
+folder_path <- "N:/Vishal//Statastical computing and emperical methods/Week 1/"
+file_name <- "HockeyLeague.xlsx"
+file_path <- paste(folder_path, file_name)
+df <- read_excel(file_path, sheet = "Tabelle1")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
