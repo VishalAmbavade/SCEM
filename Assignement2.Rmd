@@ -1,0 +1,270 @@
+---
+title: "Assignement2"
+author: "Vishal"
+date: "2022-10-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Data Wrangling
+## 1.1 Select and filter
+### Q1.
+
+```{r, echo = FALSE}
+library(Stat2Data)
+library(tidyverse)
+library(dplyr)
+
+data("Hawks")
+
+hSF <- Hawks %>%
+  filter(Species == "RT" & Weight >= 1000) %>%
+  select(Wing, Weight, Tail)
+
+head(hSF)
+```
+### Q2.
+There are 3 variables in the `hSF` called Wing, Weight and Tail. And there are six observations.
+
+## 1.2 The arrange function
+
+```{r}
+hSF <- hSF %>%
+  arrange(Wing)
+
+head(hSF)
+```
+
+## 1.3 Join and rename function
+### Q1.
+```{r}
+hawkSpeciesNameCodes <- data.frame(species_code = c("CH", "RT", "SS"),
+                                   species_name_full = c("Cooper's", "Red-tailed", "Sharp-shinned"))
+
+hawkSpeciesNameCodes
+```
+### Q2.
+
+```{r}
+hawksFullName <- Hawks %>%
+  rename(species_code = Species) %>%
+  left_join(hawkSpeciesNameCodes, on = 'Species') %>%
+  select(c(species_name_full, Wing, Weight, Tail)) %>%
+  rename(Species = species_name_full)
+
+head(hawksFullName)
+```
+
+## 1.4 The mutate function
+
+```{r}
+hawksWithBMI <- Hawks %>%
+  mutate(bird_BMI = 1000 * Weight / ((Wing) ^ 2)) %>%
+  arrange(desc(bird_BMI)) %>%
+  select(c(Species, bird_BMI))
+
+head(hawksWithBMI)  
+
+```
+## 1.5 Summarise and group-by functions
+### Q`.
+
+``` {r}
+summary_table <- hawksFullName %>%
+  group_by(Species) %>%
+  summarise(num_rows = n(),
+            mn_wing = mean(Wing),
+            md_wing = median(Wing, na.rm = TRUE),
+            t_mn_wing = mean(Wing, trim = 0.1),
+            b_wt_ratio = max(Wing / Tail, na.rm = T))
+
+summary_table
+```
+
+### Q2.
+```{r}
+hawks_summary <- Hawks %>%
+  select(c(Species, Wing, Weight, Culmen, Hallux, Tail, StandardTail, Tarsus, Crop)) %>%
+  group_by(Species) %>%
+  summarise(across(everything(), ~sum(is.na(.))))
+
+hawks_summary
+  
+```
+
+# 2. Tidy data and iteration
+## 2.1 Missing data and iteration
+
+### Q1. 
+We are using a function called `map_dbl` inside our custom function which is a part of `tidyverse` library. So, we need `tidyverse` library to run our custom function.
+
+### Q2.
+```{r}
+impute_by_median <- function(x) {
+  md <- median(x, na.rm = T)
+  impute_f <- function(z) {
+    if(is.na(z)) {
+      return(md)
+    } else {
+      return(z)
+    }
+  }
+  return(map_dbl(x, impute_f))
+}
+
+V <- c(1, 2, NA, 4)
+impute_by_median(V)
+```
+### Q3.
+
+```{r}
+x <- seq(0, 10, by = 0.1)
+y <- seq(1, 51, by = 0.5)
+
+df_xy <- data.frame(x, y)
+head(df_xy)
+
+df_xy %>% mutate(z=map2_dbl(x,y,~.x+.y)) %>% head(5)
+```
+### Q4.
+```{r}
+sometimes_missing <- function(index, value) {
+  if (index %% 5 == 0) {
+    return(NA)
+  } else {
+    return(value)
+  }
+}
+
+sometimes_missing(14, 25)
+sometimes_missing(15, 25)
+
+
+df_xy_missing <- df_xy %>%
+  mutate(y = map2_dbl(row_number(), y, sometimes_missing))
+df_xy_missing <- df_xy %>%
+  mutate(y = map2_dbl(.x = row_number(), .y = y, sometimes_missing))
+
+head(df_xy_missing, 10)
+```
+
+### Q5.
+```{r}
+df_xy_imputed <- df_xy_missing %>%
+  mutate(y = impute_by_median(y))
+head(df_xy_imputed)
+
+```
+## 2.2 Tidying data with pivot functions
+```{r}
+library(readxl)
+
+library(ggplot2)
+folder_path <- "D://Vishal//Bristol//Stats//"
+file_name <- "HockeyLeague.xlsx"
+file_path <- paste(folder_path, file_name, sep = "")
+wins_data_frame <- read_excel(file_path, sheet = "Wins")
+head(wins_data_frame)
+```
+
+### Q1. 
+```{r}
+wins_tidy <- wins_data_frame %>%
+  pivot_longer(!...1) %>%
+  rename(Year = name, Team = ...1) %>%
+  separate(value, c("Wins", "Total"), sep = " of ")
+
+wins_tidy[, 2:4] <- sapply(wins_tidy[, 2:4], as.integer)
+head(wins_tidy)
+```
+
+### Q2. 
+```{r}
+losses_data_frame <- read_excel(file_path, sheet = "Losses")
+head(as.data.frame(losses_data_frame))
+```
+
+```{r}
+losses_tidy <- losses_data_frame %>%
+  pivot_longer(!...1) %>%
+  rename(Year = name, Team = ...1) %>%
+  separate(value, c("Losses", "Total"), sep = " of ")
+head(losses_tidy)
+```
+
+### Q3.
+```{r}
+hockey_df <- merge(wins_tidy, losses_tidy, by = c('Team', 'Year')) %>%
+  select(-c(Total.y)) %>%
+  rename(Total = Total.x) 
+
+hockey_df[, 2:5] <- sapply(hockey_df[, 2:5], as.integer)
+
+hockey_df <- hockey_df %>%
+  mutate(Draws = Total - Wins - Losses,
+         Wins_rt = Wins / Total,
+         Losses_rt = Losses / Total,
+         Draws_rt = Draws / Total
+         )
+
+head(hockey_df)
+```
+
+### Q4.
+```{r}
+summary_table <- hockey_df %>%
+  select(c(Team, Wins_rt, Losses_rt, Draws_rt)) %>%
+  group_by(Team) %>%
+  summarise(across(everything(), list(md = median, mn = mean))) %>%
+  arrange(desc(Wins_rt_md))
+
+summary_table 
+```
+
+# Visulisation
+
+### Q1.
+```{r}
+wins_tidy %>%
+  filter(Team == "Ducks") %>%
+  ggplot(aes(x = as.numeric(Wins))) +
+  geom_histogram(binwidth = 3) +
+  xlab("Wins") + 
+  ylab("Count")
+```
+### Q2.
+```{r}
+wins_tidy %>%
+  filter(Team == "Ducks") %>%
+  ggplot(aes(x = as.numeric(Wins))) +
+  geom_density(adjust = 0.5) +
+  xlab("Wins") + 
+  ylab("Count")
+```
+
+```{r}
+wins_tidy %>%
+  filter(Team == "Ducks") %>%
+  ggplot(aes(x = as.numeric(Wins))) +
+  geom_density(adjust = 2) +
+  xlab("Wins") + 
+  ylab("Count")
+```
+
+Explanation: adjust is used the control the bandwidth while still using the bandwidth estimator.
+
+### Q3.
+```{r}
+wins_teams <- wins_tidy %>%
+  select(-Total) %>%
+  pivot_wider(names_from = Team, values_from = Wins)
+
+wins_teams[, 1:9] <- sapply(wins_teams[, 1:9], as.integer)
+
+wins_teams %>%
+  ggplot(aes(x = Ducks, y = Eagles)) +
+  geom_point()
+```
