@@ -1,0 +1,240 @@
+---
+title: "Assignment 4"
+author: "Vishal"
+date: "2022-10-19"
+output: html_document 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+# 1. Probability theory
+
+## 1.1 (Q1)
+
+$\Omega = \{a, b, c\}$
+<br />
+$\epsilon = \{A \subseteq B\}$
+<br />
+$\mathbb{P}(\{a\}) = 0.4$, $\mathbb{P}(\{b\}) = 0.2$, and 
+$\mathbb{P}(\{c\}) = 0.3$
+Then,
+<br />
+$\mathbb{P}(\{a, b\}) = \mathbb{P}(\{a\}) + \mathbb{P}(\{b\}) = 0.6$ 
+and 
+<br />
+$\mathbb{P}(\{b, c\}) = \mathbb{P}(\{b\}) + \mathbb{P}(\{c\}) = 0.5$
+<br />
+
+## 1.1 (Q2)
+$\mathbb{P}(\{1\}) = 0.5$ Then,
+<br />
+$\mathbb{P}(\{0\}) = 1 - 0.5 = 0.5$
+<br />
+Therefore,
+<br />
+$\mathbb{P}(\{0, 1\}) = \mathbb{P}(\{1\}) + \mathbb{P}(\{0\}) = 1$
+
+## 1.2 (Q1)
+By Kolmogorov axioms, for pairwise disjoint events A1 and A2 in event space F,
+<br />
+$P(A_1\cup A_2) = P(A_1)+P(A_2)$
+<br />
+Induction Hypothesis: Let A1,A2,...,An be pairwise disjoint events in F, i.e.
+<br />
+$A_i\cap A_j=\varnothing\quad\forall i,j=1,2,...,n;\;i\neq j$
+<br />
+Then,
+<br />
+$P(\bigcup_{i=1}^n A_i) = \sum_{i=1}^n P(A_i)$
+<br />
+Now, I want to show that for pairwise disjoint events Ai = 1,2,..., n+1
+$P(\bigcup_{i=1}^{n+1} A_i) = \sum_{i=1}^{n+1} P(A_i)$
+<br />
+Let $A_{n+1}\in F$ such that $A_{n+1}$ is pairwise disjoint from events $A_i$, i = 1,2,...,n.
+
+<br />
+$B = \bigcup_{i=1}^n A_i$
+<br />
+Note that $B \cap A_{n+1} = \phi$ because if $x \in A_{n+1}$, then $x \notin A_i$ $∀i = 1,2,...,n ⇒ x ∉ B.$ 
+On the other hand if  $x \in B$ then $x \in A_i$ for exactly one i since $A_i$'s are pairwise disjoint. $A_{n+1}$ and $A_i$ are also disjoint so $x \notin A_{n+1}$.
+<br />
+We mentioned earlier that the probability of the union of two disjoint events is the sum of the probabilities of those events. Hence,
+<br />
+$\begin{align} &P(B)\cup P(A_{n+1}) = P(B)+P(A_{n+1}) \\ &\Rightarrow (\bigcup_{i=1}^n A_i)\cup A_{n+1} = \sum_{i=1}^nP(A_i)+P(A_{n+1}) \\ &\Rightarrow (\bigcup_{i=1}^{n+1} A_i) = \sum_{i=1}^{n+1}P(A_i) \end{align}$
+
+<br />
+Thus by induction, we have that for a finite collection of pairwise disjoint events $A_1$ through $A_n$ in F,
+<br />
+$P(\bigcup_{i=1}^n A_i) = \sum_{i=1}^n P(A_i)$
+
+## 1.2 (Q2)
+The complement rule can be derived from the axioms: the union of S(event) and its complement is $\Omega$ (Sample space)(either S happens or it does not, and there is no other possibility), so $\mathbb{P}(S \cup S^c) = \mathbb{P}(S) = 1$, by axiom 2. 
+<br />
+The event S and its complement are disjoint (if "S does not happen" happens, S does not happen; if S happens, "S does not happen" does not happen), so $\mathbb{P}(S \cup S^c) = \mathbb{P}(S) + \mathbb{P}(S^c)$ by axiom 3.
+<br />
+Putting these together, we get $\mathbb{P}(S) + \mathbb{P}(S^c) = 1$. If we subtract $\mathbb{P}(S)$ from both sides of this equation, we get what we sought: $\mathbb{P}(S^c) = 1 - \mathbb{P}(S)$
+
+## 1.2 (Q3)
+if the weather forecast says that the chance of rain on Saturday is 40% and the chance of rain on Sunday is 10%, then the chance that it rains at some point during those two days is at least 40% and at most 50%.
+<br />
+
+To find the chance exactly, you would need the chance that it rains on both days, which you don't have. Assuming independence doesn't seem like a good idea in this setting. So you cannot compute an exact answer, and must be satisfied with bounds.
+<br />
+
+Though bounds aren't exact answers or even approximations, they can be very useful. Here is an example of a common use of Boole's Inequality in data science. It has Bonferroni's name attached to it, because Boole and Bonferroni both have related bounds on probabilities of unions.
+<br />
+
+[click here](!http://prob140.org/sp18/textbook/notebooks-md/5_01_Bounding_the_Chance_of_a_Union.html)
+
+## 1.2 (Q4)
+There is $A \cup (B \cap A^c) = (A \cup B) \cap (A \cup A^c) = A \cup B$, i.e. $A \cup B$ can be expressed as the union of two disjoint sets. Therefore, according to axiom 3, there is
+<br />
+$\mathbb{P}(A \cup B) = \mathbb{P}(A) + \mathbb{P}(B \cap A^c)$.
+<br />
+But $B = B \cap (A \cup A^c) = (B \cap A) \cup (B \cap A^c)$ is also the union of two disjoint sets, so there is also,
+<br />
+$\mathbb{P}(B) = \mathbb{P}(B \cap A) + \mathbb{P}(B \cap A^c) \Rightarrow \mathbb{P}(B \cap A^c) = \mathbb{P}(B) - \mathbb{P}(B \cap A)$.
+<br />
+Substituting the latter expression into the one above gives,
+<br />
+$\mathbb{P}(A \cup B) = \mathbb{P}(A) + \mathbb{P}(B) - \mathbb{P}(A \cap B)$.
+....
+
+# 2. Finite probability spaces
+
+## 2.1 (Q1)
+
+Probability of picking red sphere from a bag containing 10 spheres is $\frac{1}{10}$. If we replace the sphere every time then the probability of drawing the red ball 22 times is,
+
+$\mathbb{P}(A) = \frac{3}{10} * \frac{3}{10} * ... * \frac{3}{10}$
+<br/>
+i.e. $\mathbb{P}(A) = \left( \frac{3}{10} \right)^{22}$
+<br/>
+Probability that z out of 22 selections were red is can be given by **binomial distribution.**
+<br/>
+$P(X = z) = \binom{n}{z} p^k (1-p)^{n-z}$
+i.e. for $z = 10$
+<br/>
+$P(X = 10) = \binom{22}{10} \left (\frac{3}{10} \right)^k \left (\frac{7}{10} \right)^{12}$
+
+## 2.1 (Q2)
+```{r}
+prob_red_spheres <- function(z) {
+  return(choose(22, z) * ((0.3) ^ z) * ((0.7) ^ (22 - z)))
+}
+
+prob_red_spheres(10)
+```
+## 2.1 (Q3)
+```{r}
+num_reds <- seq(1, 22, by = 1)
+prob <- unlist(lapply(num_reds, prob_red_spheres))
+
+prob_by_num_reds <- data.frame(num_reds, prob)
+head(prob_by_num_reds)
+```
+
+## 2.1 (Q4)
+```{r}
+prob_by_num_reds %>%
+  ggplot(aes(num_reds, prob)) +
+  geom_line()
+```
+
+## 2.1 (Q5)
+```{r}
+sample(10, 22, replace = T)
+
+num_trials <- 1000
+set.seed(0)
+sampling_with_replacement_simulation <- data.frame(trial = 1:num_trials) %>%
+  mutate(sample_balls = map(.x = trial, ~sample(10, 22, replace = T)))
+
+head(sampling_with_replacement_simulation)
+```
+
+```{r}
+sampling_with_replacement_simulation <-
+  sampling_with_replacement_simulation %>%
+  mutate(num_reds = (map_dbl(.x = sample_balls, ~sum(.x <= 3))))
+
+head(sampling_with_replacement_simulation)
+```
+```{r}
+num_reds_in_simulation <- sampling_with_replacement_simulation %>%
+  pull(num_reds)
+
+prob_by_num_reds <- prob_by_num_reds %>%
+  mutate(predicted_prob = map_dbl(.x = num_reds, ~sum(num_reds_in_simulation == .x)) / num_trials)
+  
+head(prob_by_num_reds)
+```
+```{r}
+prob_by_num_reds %>%
+  rename(TheoreticalProbability = prob, EstimatedProbability = predicted_prob) %>%
+  pivot_longer(cols = c("EstimatedProbability", "TheoreticalProbability"),
+               names_to = "Type", values_to = "count") %>%
+  ggplot(aes(num_reds, count)) +
+  geom_line(aes(linetype = Type, color = Type)) +
+  geom_point(aes(color = Type)) +
+  scale_linetype_manual(values = c("solid", "dashed")) +
+  theme_bw() +
+  xlab("Number of reds") +
+  ylab("Probabilities")
+```
+....
+
+## 2.2 (Q1)
+
+### 1
+```{r}
+set.seed(19)
+```
+
+### 2
+```{r}
+num_trials <- 1000
+```
+
+### 3
+```{r}
+sampling_without_replacement_simulation <- data.frame(trial = 1:num_trials) %>%
+  mutate(sample_balls = map(.x = trial, ~sample(100, 10, replace = F)))
+
+head(sampling_without_replacement_simulation)
+```
+
+### 4
+```{r}
+sampling_without_replacement_simulation <-
+  sampling_without_replacement_simulation %>%
+  mutate(num_reds = (map_dbl(.x = sample_balls, ~sum(.x <= 50)))) %>%
+  mutate(num_blues = (map_dbl(.x = sample_balls, ~sum(.x > 50 & .x <= 80)))) %>%
+  mutate(num_greens = (map_dbl(.x = sample_balls, ~sum(.x > 80))))
+
+head(sampling_without_replacement_simulation)
+```
+
+### 5
+```{r}
+sampling_without_replacement_simulation <- 
+  sampling_without_replacement_simulation %>%
+  mutate(min_count = pmin(num_reds, num_blues, num_greens))
+head(sampling_without_replacement_simulation)
+```
+### 6
+```{r}
+# Proportion of rows where minimum number of three counts is 0.
+sum(sampling_without_replacement_simulation$min_count %in% 0) / nrow(sampling_without_replacement_simulation)
+```
+
+
+
+
