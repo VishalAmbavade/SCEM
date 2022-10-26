@@ -1,0 +1,154 @@
+---
+title: "Assignment 5"
+author: "Insert My Name"
+date: "2022-10-26"
+output: html_document # you can change to other output format if you want
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Conditional probability, Bayes rule and independence
+
+## 1.1 (Q1)
+We have,
+
+$\mathbb{P}(A) = 0.9$\
+$\mathbb{P}(B|A) = 0.8$\
+$\mathbb{P}(B^\complement|A^\complement) = 0.75$\
+
+And we know that,\
+$\mathbb{P}(B) = \mathbb{P}(A \cap B) + \mathbb{P}(A^ \complement \cap B) \Rightarrow \mathbb{P}(B|A).\mathbb{P}(A) + \mathbb{P}(B|A^\complement).\mathbb{P}(A^\complement)$\
+$\mathbb{P}(B) = \mathbb{P}(B|A).\mathbb{P}(A) + \mathbb{P}(B|A^\complement).\mathbb{P}(A ^\complement)$\
+$\Rightarrow 0.8 * 0.9 + [1 - \mathbb{P}(B ^ \complement|A ^ \complement)] * [1 - \mathbb{P}(A)]$\
+$\Rightarrow 0.8 * 0.9 + [0.25] * 0.1$\
+$\Rightarrow 0.745$
+
+Using Bayes theorem,\
+$\mathbb{P}(A|B) = \frac{\mathbb{P}(A).\mathbb{P}(B|A)}{\mathbb{P}(B)}$\
+$\Rightarrow \frac{0.9 * 0.8}{0.745}$\
+$\Rightarrow 0.9666443$\
+
+Therefore, the probability of rain is **0.966443** given the forecast of rain.
+
+## 1.2 (Q1)
+1. $\mathbb{P}(A|B) = \frac{\mathbb{P}(A).\mathbb{P}(B|A)}{\mathbb{P}(B)}$\
+If the $\mathbb{P}(B\A) = \phi$, the probability becomes indeterminate.\
+
+2. $\mathbb{P}(A|B) = \frac{\mathbb{P}(B \cap A)}{\mathbb{P}(A)}$\
+Hence, if $\mathbb{P}(B \cap A) = 0$, $\mathbb{P}(A|B) = 0$.\
+
+3. Since, $B \in A$, probability becomes\
+$\mathbb{P}(A|B) = \frac{\mathbb{P}(A \cap B)}{\mathbb{P}(A)}$\
+$\Rightarrow \frac{\mathbb{P}(A)}{\mathbb{P}(A)} \Rightarrow 1$\
+If $\mathbb{P}(B\A) = 0$, then probability is 0.\
+
+4. $\mathbb{P}(A \cap \Omega) = \mathbb{P}(A) = \mathbb{P}(A).1 = \mathbb{P}(A)\mathbb{P}(\Omega)$.\
+
+5. $\mathbb{P}(A \cap B \cap C) = \mathbb{P}(A \cap (B \cap C))$\
+$\Rightarrow \mathbb{P}(A|(B \cap C))\mathbb{P}(B \cap C)$\
+$\Rightarrow \mathbb{P}(A | (B \cap C)) (\mathbb{P}(C | A)\mathbb{P}(B))$\
+$\Rightarrow \mathbb{P}(C)\mathbb{P}(B|C)\mathbb{P}(A|B \cap C)$\
+
+6. We know that,\
+$\mathbb{P}(A | B) = \frac{\mathbb{P}(A \cap B)}{\mathbb{P}(B)}$\
+
+Here, if we condition everything on C, we get,\
+$\mathbb{P}(A | B \cap C) = \frac{\mathbb{P}(A \cap B | C)}{\mathbb{P}(B | C)}$\
+$\Rightarrow \mathbb{P}(A | (B \cap C)) = \frac{\mathbb{P}(A \cap B \cap C)}{\mathbb{P}(B \cap C)}$\
+$\Rightarrow \frac{\mathbb{P}(B | (A \cap C)).\mathbb{P}(A|C)}{\mathbb{P}(B|C)}$\
+
+## 1.2 (Q2)
+Let's say,\
+$\mathbb{P}(W) = 0.2$ i.e. probability of wind\
+$\mathbb{P}(F | W) = 0.3$ i.e. probability of flight when there's a wind\
+$\mathbb{P}(F ^ \complement | W ^ \complement) = 0.1$ i.e. probability of flight being cancelled when there's no wind\
+$\mathbb{P}(F ^ \complement) = ?$ Probability of flight not being cancelled\
+
+We know that,\
+$\mathbb{P}(F ^ \complement | W ^ \complement) = \frac{\mathbb{P}(F ^ \complement) - \mathbb{P}(F ^ \complement|W) \cdot \mathbb{P}(W)}{\mathbb{P}(W ^ \complement)}$\
+$0.1 = \frac{\mathbb{P}(F ^ \complement) - [1 - \mathbb{P}(F | W)] \cdot 0.2}{0.8}$\
+$0.08 = \mathbb{P}(F ^ \complement) - [0.14]$\
+$\mathbb{P}(F ^ \complement) = 0.22$\
+
+Therefore, the probability of flight being not cancelled is **0.22**
+
+
+## 1.3 Mututal independence and pair-wise independent
+## (Q1)
+$(A \cap B) = \{(1, 1, 0)\}$\
+And probability of $(A \cap B) = 1/4$\
+$\mathbb{P}(A) = 2/4$ & $\mathbb{P}(B) = 2/4$\
+Therefore,\
+$\mathbb{P}(A \cap B) = \mathbb{P}(A) \cdot \mathbb{P}(B) \Rightarrow 1/4$
+
+$(A \cap C) = \{(1, 0, 1)\}$\
+$\mathbb{P}(A) = 2/4$ & $\mathbb{P}(C) = 2/4$\
+And probability of $(A \cap C) = 1/4$\
+Therefore,\
+$\mathbb{P}(A \cap C) = \mathbb{P}(A) \cdot \mathbb{P}(C)$
+
+$(C \cap B) = \{(0, 1, 1)\}$\
+And probability of $(C \cap B) = 1/4$\
+$\mathbb{P}(C) = 2/4$ & $\mathbb{P}(B) = 2/4$\
+Therefore,\
+$\mathbb{P}(C \cap B) = \mathbb{P}(C) \cdot \mathbb{P}(B)$\
+
+$A \cap B \cap C$ denotes the intersection of 3 sets, A, B and C. i.e. common elements that occur in all three sets.\
+
+$P(A\cap B\cap C)=P\big((A\cap B)\cap C\big)\\$\
+$\Rightarrow P\big(C\mid(A\cap B)\big)P(A\cap B)\\$\
+$\Rightarrow P\big(C\mid(A\cap B)\big)\Big(P(B\mid A)P(A)\Big)\\$\
+$\Rightarrow P(A)P(B\mid A)P(C\mid A\cap B)$\
+
+Yes, events A, B and C are mutually independent since their outcomes do not depend on the outcome on the other outcomes.
+
+
+# 2. Random variables and discrete random variables
+
+##2.1 (Q1)
+
+We know that,\
+$E(XY) = E(X)E(Y)$ when $X$ is independent of $Y$ and $Cov(X, Y) = E(XY) - E(X)E(Y)$\
+Therefore, $Cov(X, Y) = 0$ is obtained when $X$ is independent of $Y$. 
+
+
+## 2.2 (Q1)
+1. Probability Mass Function 
+
+
+## 2.2 (Q2)
+
+.....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
