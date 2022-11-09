@@ -1,0 +1,135 @@
+---
+title: "Assignment 6"
+author: "Vishal"
+date: "2022-11-09"
+output: html_document # you can change to other output format if you want
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# 1. Continuous random variables and limit laws
+
+## 1.1 (Q1)
+We know that,\
+$\mathbb{P}(X \le b) = \int_{-\infty}^{b} f_x(x) \,dx$\
+and\
+$\mathbb{P}(X \le a) = \int_{-\infty}^{a} f_x(x) \,dx$\
+Which gives,\
+$\mathbb{P}(X \le b) - \mathbb{P}(X \le a) = \int_{a}^{b} f_x(x) \,dx$\
+i.e. $\mathbb{P}(X \le b) - \mathbb{P}(X \le a) = b - a$\
+Therefore,\
+$\mathbb{P}(U \in [a, b]) = b - a$
+....
+
+## 1.1 (Q2)
+```{r}
+set.seed(0) 
+n <- 1000 
+sample_X <- data.frame(U = runif(n)) %>% 
+  mutate(X = case_when((0 <= U) & (U < 0.25) ~ 3, 
+                      (0.25 <= U) & (U < 0.5) ~ 10, 
+                      (0.5 <= U) & (U <= 1) ~ 0)) %>% 
+  pull(X)
+
+head(sample_X)
+```
+```{r}
+table(sample_X)
+```
+
+If we look at the $sample_x$ data frame, we see that, there are 481 samples that correspond to 0, 244 samples of 3 and 275 samples of 10. These are discretely random variables with uniform distribution. \
+These are generated randomly and so the number of occurrences may change every time this code is run.\
+
+To prove the distributions, we can integrate $\mathbb{P}_X(x) dx$ over the probabilities.\
+So,\
+$\mathbb{P}(X = 3) = \mathbb{P}_x(x)dx$\
+$\Rightarrow \int_{0}^{0.25} f_x(x) \,dx$\
+$\Rightarrow \int_{0}^{0.25} \alpha \,dx$\
+$\Rightarrow 0.25$\
+
+And\
+$\mathbb{P}(X = 10) = \mathbb{P}_x(x)dx$\
+$\Rightarrow \int_{0.25}^{0.50} f_x(x) \,dx$\
+$\Rightarrow \int_{0.25}^{0.50} \beta \,dx$\
+$\Rightarrow 0.25$\
+
+And\
+$\mathbb{P}(X = 0) = \mathbb{P}_x(x)dx$\
+$\Rightarrow \int_{0.5}^{1} f_x(x) \,dx$\
+$\Rightarrow \int_{0.5}^{1} x \,dx$\
+$\Rightarrow 0.5$ i.e. $1- \alpha - \beta$\
+
+## 1.1 (Q3)
+
+```{r}
+sample_x_0310 <- function(alpha, beta, n) {
+  df <- data.frame(U = runif(n)) %>%
+    mutate(X = case_when((0 <= U) & (U < alpha) ~ 3,
+                         (alpha <= U) & (U < (alpha + beta)) ~ 10,
+                         ((alpha + beta) <= U) & (U <= 1) ~ 0)) %>%
+    pull(X)
+  return(df)
+}
+```
+## 1.1 (Q4)
+
+```{r}
+df <- sample_x_0310(1/2, 1/10, 10000)
+head(df)
+```
+**Sample average of $X_1, X_2, ..., X_n$:**\
+
+```{r}
+mean(df)
+```
+**Theoretical Expectation of $X_1, X_2, ..., X_n$:**\
+```{r}
+vals <- c(3, 10, 0)
+probs <- c(1/2, 1/10, 2/5)
+
+Ex <- weighted.mean(vals, probs)
+Ex
+```
+Since the number of samples we have considered in the above example is 10000 which is very high, the theoretical expected value and the calculated expected values are similar. If we increase the number of samples, difference between the two will reduce further.
+
+## 1.1 (Q5)
+**Variance of the sample:**\
+```{r}
+var(df)
+```
+
+**Theoretical variance:**\
+```{r}
+Vx <- sum(((vals - Ex) ^ 2) * probs)
+Vx
+```
+## 1.1 (Q6)
+```{r}
+
+
+```
+
+
+# 2. Location estimators with Gaussian data
+
+
+## 2 (Q1)
+
+....
+
+
+## 2 (Q2)
+
+....
+
+# 3. (**) The law of large numbers and Hoeffding’s inequality
+
+## 3 (Q1)
+
+
+
+
+
