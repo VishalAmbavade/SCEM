@@ -2,11 +2,11 @@
 title: "Assignment 6"
 author: "Vishal"
 date: "2022-11-09"
-output: html_document # you can change to other output format if you want
+output: pdf_document # you can change to other output format if you want
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 library(tidyverse)
 ```
 
@@ -22,7 +22,7 @@ $\mathbb{P}(X \le b) - \mathbb{P}(X \le a) = \int_{a}^{b} f_x(x) \,dx$\
 i.e. $\mathbb{P}(X \le b) - \mathbb{P}(X \le a) = b - a$\
 Therefore,\
 $\mathbb{P}(U \in [a, b]) = b - a$
-....
+
 
 ## 1.1 (Q2)
 ```{r}
@@ -106,29 +106,445 @@ var(df)
 Vx <- sum(((vals - Ex) ^ 2) * probs)
 Vx
 ```
+
 ## 1.1 (Q6)
 ```{r}
+temp <- data.frame(beta = seq(1/10, 9/10, 0.01))
 
 
+
+myData <- temp %>%
+  mutate(sample_x = map(.x = beta, ~sample_x_0310(1/10, .x, 100)),
+         samplemean = map_dbl(.x = sample_x, ~mean(.x)))
+newEx <- c()
+for (i in myData$beta) {
+  vals <- c(3, 10, 0)
+  probs <- c(1/10, i, 1 - (0.1 + i))
+  Ex <- weighted.mean(vals, probs)
+  newEx <- c(newEx, Ex)
+}
+
+myData <- myData %>%
+  mutate(Expectation = newEx)
+```
+
+## 1.1 (Q7)
+```{r}
+d <- gather(myData, key = "attr", value = "value", Expectation, samplemean)
+
+ggplot(d, aes(x = beta, y = value, color = attr)) +
+  geom_point()
+```
+
+## 1.2 (Q1) \
+To prove that $\mathit{p}_\lambda$, we need to integrate the given function. If the integration boild down to 1, then we can say that the given function is well-defined probability density function.\
+
+$\int_{0}^{\infty} \lambda e ^ {-\lambda x} \,dx$\
+Let $\mathit{u} = -\lambda x, so \space du = -\lambda dx$\
+
+$\Rightarrow \int_{0}^{\infty} \lambda e ^ {-\lambda x} \,dx = -\int_{0}^{\infty} e ^ {-\lambda x} (-\lambda \,dx) = \int_{0}^{\infty} e ^ \mathit{u} \,du$\
+
+The integral of $e ^ \mathit{e}$ is itself.\
+$\Rightarrow - \int_{0}^{\infty} e ^ \mathit{u} \,du$ \
+$\Rightarrow -e ^ \mathit{u} + C = -e ^ {-\lambda x} + C$ \
+$\Rightarrow -[e ^ {-\lambda x}] - [- e ^ {0}]$ \
+$\Rightarrow 1$ \
+$\therefore$ given function is a well-defined probability density function.\
+
+**Cumulative Distribution Function**\
+For $x > 0$, we have \
+$F_X(x) = \int_{0}^{x} \lambda e ^ {\lambda t} dt = 1 - e ^ {-\lambda x}$ \
+So we can express CDF as\
+$F_X(x) = (1 - e ^ {-\lambda x})u(x)$\
+
+**Quantile Function**\
+The cumulative distribution function of the exponential distribution is:\
+$$\label{eq:exp-cdf}
+F_X(x) = \left\{
+\begin{array}{rl}
+0 \; , & \text{if} \; x < 0 \\
+1 - \exp[-\lambda x] \; , & \text{if} \; x \geq 0 \; .
+\end{array}
+\right.$$\
+The quantile function $Q_X(\mathit{p})$ is defined as the smallest $x$, such that $F_X(x) = p$\
+$$\label{eq:qf}
+Q_X(p) = \min \left\lbrace x \in \mathbb{R} \, \vert \, F_X(x) = p \right\rbrace \;$$\
+Thus, we have $Q_X(p) = -\infty$, if $p = 0$. When $p > 0$, it holds that,\
+$$\label{eq:exp-qf-s1}
+Q_X(p) = F_X^{-1}(x) \;$$\
+$$\label{eq:exp-qf-s2}
+\begin{split}
+p &= 1 - \exp[-\lambda x] \\
+\exp[-\lambda x] &= 1-p \\
+-\lambda x &= \ln(1-p) \\
+x &= -\frac{\ln(1-p)}{\lambda} \;
+\end{split}$$
+
+## 1.2 (Q2)
+```{r}
+my_cdf_exp <- function(x, lambda) {
+  if (x < 0) {
+    return(0)
+  } else {
+    val = 1 - exp(-lambda * x)
+    return(val)
+  }
+}
+
+lambda <- 1/2 
+map_dbl(.x=seq(-1, 4), .f = ~my_cdf_exp(x =.x, lambda = lambda))
+```
+
+```{r}
+test_inputs <- seq(-1, 10, 0.1) 
+my_cdf_output <- map_dbl(.x = test_inputs, .f = ~my_cdf_exp(x = .x, lambda = lambda)) 
+inbuilt_cdf_output <- map_dbl(.x = test_inputs, .f = ~pexp(q = .x, rate = lambda))
+all.equal(my_cdf_output, inbuilt_cdf_output)
+```
+
+## 1.2 (Q3)\
+
+```{r}
+my_quantile_exp <- function(p, lambda) {
+  ans = -log(1 - p) / lambda
+  return(ans)
+}
+
+lambda <- 1/2 
+map_dbl(.x=seq(0.01, 0.99, 0.2), .f=~my_cdf_exp(x=.x,lambda=lambda))
+```
+```{r}
+test_inputs <- seq(0.01, 0.99, 0.2) 
+my_quantile_output <- map_dbl(.x = test_inputs, .f = ~my_quantile_exp(p =.x, lambda = lambda)) 
+inbuilt_quantile_output <- map_dbl(.x = test_inputs, .f = ~qexp(p = .x, rate = lambda))
+all.equal(my_quantile_output, inbuilt_quantile_output)
+
+```
+## 1.2 (Q4)\
+
+**Expectation of exponential distribution**\
+Let $X ~ Exponential(\lambda)$. We can find its expected value as follows, using integration by parts:\
+$$EX = \int_{0}^{\infty} x \lambda e^{- \lambda x}dx$$
+$$Considering \space y = \lambda x$$
+$$= \frac{1}{\lambda} \int_{0}^{\infty} y e^{- y}dy$$ 
+$$= \frac{1}{\lambda} \bigg[-e^{-y}-ye^{-y} \bigg]_{0}^{\infty}$$
+$$=\frac{1}{\lambda}$$\
+
+**Variance of exponential distribution**\
+We have,\
+$$EX^2 = \int_{0}^{\infty} x^2 \lambda e^{- \lambda x}dx$$
+$$= \frac{1}{\lambda^2} \int_{0}^{\infty} y^2 e^{- y}dy$$
+$$= \frac{1}{\lambda^2} \bigg[-2e^{-y}-2ye^{-y}-y^2e^{-y} \bigg]_{0}^{\infty}$$
+$$=\frac{2}{\lambda^2}.$$
+Therfore, we get\
+$$\textrm{Var} (X)=EX^2-(EX)^2=\frac{2}{\lambda^2}-\frac{1}{\lambda^2}=\frac{1}{\lambda^2}.$$
+## 1.3 The Binomial distribution and the central limit theorem\
+## 1.3 (Q1)\
+In Binomial distribution, the probability of seeing $k$ successes in $n$ trials where the probability of success in each trial is $p$ (and $q = 1-p$) is given by,\
+$$P(X=k) = ({}_n C_k) p^k q^{n-k}$$
+We know that,\
+$$E(X + Y) = E(X) + E(Y) \quad \quad \textrm{and} \quad \quad Var(X + Y) = Var(X) + Var(Y)$$
+Let, $X_t$ be a random variable that gives the number of successes seen a single trial (i.e., either 0 or 1).\
+The distribution of $X_t$ is simple in the extreme:\
+$$\begin{array}{c|c|c}
+x & 0 & 1\\\hline
+P(X_t = x) & q & p
+\end{array}$$
+Which gives,\
+$$E(X_t) = (0)(q) + (1)(p) = p$$
+and\
+$$\begin{array}{rcl}
+Var(X_t) &=& \left[(0^2)(q) + (1^2)(p)\right] - p^2\\
+&=& p - p^2\\
+&=& p(1-p)\\
+&=& pq
+\end{array}$$
+Now, returning to the expected value of the original random variable $X$ that follows a binomial distribution, note that\
+$$\begin{array}{rcl}
+E(X) &=& \underbrace{E(X_t) + E(X_t) + \cdots E(X_t)}_{\textrm{n terms}}\\
+&=& n E(X_t)\\
+&=& np
+\end{array}$$
+Finding the variance of $X$ is just as immediate:\
+$$\begin{array}{rcl}
+Var(X) &=& \underbrace{Var(X_t) + Var(X_t) + \cdots Var(X_t)}_{\textrm{n terms}}\\
+&=& n Var(X_t)\\
+&=& npq
+\end{array}$$
+This, of course, immediately gives the standard deviation of $X$:
+$$SD(X) = \sqrt{Var(X)} = \sqrt{npq}$$\
+
+## 1.3 (Q2)\
+```{r}
+pmf <- c()
+x <- seq(0, 50, 1)
+
+for (i in x) {
+  binom_temp <- dbinom(i, size = 50, prob = 7/10)
+  pmf <- c(pmf, binom_temp)
+}
+
+binom_df <- data.frame(x, pmf)
+head(binom_df)
+```
+## 1.3 (Q3)\
+```{r}
+x <- seq(0, 50, 0.01)
+pdf <- c()
+
+for(i in  x) {
+  dnorm_temp <- dnorm(i, mean = (50 * 0.7), sd = sqrt(50 * 0.7 * (1 - 0.7)))
+  pdf <- c(pdf, dnorm_temp)
+}
+
+guassian_df <- data.frame(x, pdf)
+head(guassian_df)
+```
+## 1.3 (Q4)\
+```{r}
+colors <- c("Guassian pdf" = "red", "Binomial pmf" = "blue")
+fill <- c("Guassian pdf" = "white", "Binomial pmf" = "white")
+
+ggplot() + labs(x = "x", y = "Probability") + theme_bw() +
+  geom_line(data = guassian_df, aes(x, y = pdf, color = "Guassian pdf"), size = 2) +
+  geom_col(data = binom_df, aes(x = x, y = pmf, color = "Binomial pmf", fill = "Binomial pmf")) +
+  scale_color_manual(name = "myLegend", values = colors) +
+  scale_fill_manual(name = "myLegend", values = fill) +
+  xlim(c(20, 50))
+```
+
+## 1.4 The Guassian Distribution\
+## 1.4 (Q1)\
+```{r}
+x <- seq(-4, 6, 0.01)
+pdf1 <- c()
+pdf2 <- c()
+pdf3 <- c()
+
+
+for (i in x) {
+  dnorm_temp1 <- dnorm(i, mean = 1, sd = 1)
+  pdf1 <- c(pdf1, dnorm_temp1)
+  
+  dnorm_temp2 <- dnorm(i, mean = 1, sd = 2)
+  pdf2 <- c(pdf2, dnorm_temp2)
+  
+  dnorm_temp3 <- dnorm(i, mean = 1, sd = 3)
+  pdf3 <- c(pdf3, dnorm_temp3)
+}
+df <- data.frame(x, pdf1, pdf2, pdf3)
+
+colnames(df) <- c("x", "1", "2", "3")
+
+d <- df %>%
+  pivot_longer(c(`1`, `2`, `3`), names_to = "Variance", values_to = "Density")
+head(d)
+
+ggplot(d, aes(x = x, y = Density, color = Variance, linetype = Variance)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Probability Density Function (PDF)")
+```
+
+## 1.4 (Q2)\
+
+```{r}
+x <- seq(-4, 6, 0.01)
+
+cdf1 <- c()
+cdf2 <- c()
+cdf3 <- c()
+
+
+for (i in x) {
+  pnorm_temp1 <- pnorm(i, mean = 1, sd = 1)
+  cdf1 <- c(cdf1, pnorm_temp1)
+  
+  pnorm_temp2 <- pnorm(i, mean = 1, sd = 2)
+  cdf2 <- c(cdf2, pnorm_temp2)
+  
+  pnorm_temp3 <- pnorm(i, mean = 1, sd = 3)
+  cdf3 <- c(cdf3, pnorm_temp3)
+}
+df <- data.frame(x, cdf1, cdf2, cdf3)
+
+colnames(df) <- c("x", "1", "2", "3")
+
+d <- df %>%
+  pivot_longer(c(`1`, `2`, `3`), names_to = "Variance", values_to = "Density")
+head(d)
+
+ggplot(d, aes(x = x, y = Density, color = Variance, linetype = Variance)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Cumulative Distribution Function (CDF)")
+```
+
+## 1.4 (Q3)\
+```{r}
+x <- seq(-4, 6, 0.01)
+
+qdf1 <- c()
+qdf2 <- c()
+qdf3 <- c()
+
+
+for (i in x) {
+  qnorm_temp1 <- qnorm(i, mean = 1, sd = 1)
+  qdf1 <- c(qdf1, qnorm_temp1)
+  
+  qnorm_temp2 <- qnorm(i, mean = 1, sd = 2)
+  qdf2 <- c(qdf2, qnorm_temp2)
+  
+  qnorm_temp3 <- qnorm(i, mean = 1, sd = 3)
+  qdf3 <- c(qdf3, qnorm_temp3)
+}
+df <- data.frame(x, qdf1, qdf2, qdf3)
+
+colnames(df) <- c("x", "1", "2", "3")
+
+d <- df %>%
+  pivot_longer(c(`1`, `2`, `3`), names_to = "Variance", values_to = "Density")
+head(d)
+
+ggplot(d, aes(x = x, y = Density, color = Variance, linetype = Variance)) +
+  geom_line() +
+  theme_bw() +
+  labs(title = "Quantile Function (QF)")
 ```
 
 
-# 2. Location estimators with Gaussian data
+## 1.4 (Q4)\
+```{r}
+set.seed(42)
+standardGaussianSample <- rnorm(100, 0, 1)
+head(standardGaussianSample)
+```
+
+## 1.4 (Q5)\
+```{r}
+# Alpha = 3 and Beta = 1
+mean1Var3GaussianSampleA <- (3 * standardGaussianSample) + 1
+head(mean1Var3GaussianSampleA)
+```
+$\alpha = 3$ and $\beta = 1$.
+
+## 1.4 (Q6)\
+```{r}
+set.seed(42)
+mean1Var3GaussianSampleB <- rnorm(100, 1, 3)
+head(mean1Var3GaussianSampleB)
+```
+```{r}
+all.equal(mean1Var3GaussianSampleA, mean1Var3GaussianSampleB)
+```
+We can see that, entries of $mean1Var3GaussianSampleA$ and $mean1Var3GaussianSampleB$ are the same.
+
+## 1.4 (Q7)
+```{r}
+x <- seq(-4, 5.99, 0.1)
+pdf <- c()
+for (i in x) {
+  dnorm_t <- dnorm(i, mean = 1, sd = 3)
+  pdf <- c(pdf, dnorm_t)
+}
+
+dfMean1Var3 <- data.frame(x, mean1Var3GaussianSampleA, pdf)
+head(dfMean1Var3)
+
+colors <- c("Polulation density" = "red", "Sample mean" = "green", "Sample Kernel Density" = "blue", "Population mean" = "purple") 
+fill<-c("Gaussianpdf" = "white", "Binomialpmf" = "white")
 
 
-## 2 (Q1)
+ggplot(dfMean1Var3, aes(mean1Var3GaussianSampleA)) +
+  geom_density(aes(color = "Sample Kernel Density")) +
+  geom_line(aes(x = x, y = pdf, color = "Polulation density"), linetype = 2) +
+  geom_vline(aes(xintercept = mean(mean1Var3GaussianSampleA), color = "Sample mean"), linetype = 2) +
+  geom_vline(aes(xintercept = 1, color = "Population mean")) +
+  xlab("x") + ylab("Density") +
+  theme_bw()
+```
 
-....
+## 1.4 (Q8) \
+We can obtain any normal random varibale by shifting and scaling a standard normal random variable. In particular, define\
+$$X = \sigma Z + \mu, \hspace{20pt} \textrm{where }\sigma > 0$$
+Then, \
+$$EX = \sigma EZ + \mu = \mu,$$
+$$\textrm{Var}(X) = \sigma ^ 2 \textrm{Var}(Z) = \sigma ^ 2$$
+We say that, $X$ is a normal random variable with mean $\mu$ and variance $\sigma^2$. We write $X \sim N(\mu, \sigma^2)$. \
 
+Conversely, if $X \sim N(\mu, \sigma^2)$, the random variable defined by $Z=\frac{X-\mu}{\sigma}$ is a standard normal random variable, i.e., $Z \sim N(0,1)$. To find the CDF of $X \sim N(\mu, \sigma^2)$, we can write,\
 
-## 2 (Q2)
+$$F_X(x) = P(X \leq x)$$
+$$=P( \sigma Z+\mu \leq x) \hspace{20pt} \big(\textrm{where }Z \sim N(0,1)\big)$$
+$$=P\left(Z \leq \frac{x-\mu}{\sigma}\right)$$
+$$=\Phi\left(\frac{x-\mu}{\sigma}\right)$$
+To find the PDF, we can take th derivative of $F_X,$\
+$$f_X(x) = \frac{d}{dx} F_X(x)$$
+$$=\frac{d}{dx} \Phi\left(\frac{x-\mu}{\sigma}\right)$$
+$$=\frac{1}{\sigma} \Phi'\left(\frac{x-\mu}{\sigma}\right) \hspace{20pt} \textrm{(chain rule for derivative)}$$
+$$=\frac{1}{\sigma} f_Z\left(\frac{x-\mu}{\sigma}\right)$$
+$$=\frac{1}{\sigma\sqrt{2 \pi}} \exp\left\{-\frac{(x-\mu)^2}{2\sigma^2}\right\}$$\
 
-....
+# 2. Location estimators with Gaussian data\
+```{r}
+set.seed(0)
+num_trials_per_sample_size <- 1000
+min_sample_size <- 30
+max_sample_size <- 500
+sample_size_inc <- 5
+mu_0 <- 1
+sigma_0 <- 3
+
+simulation_df <- crossing(trial = seq(num_trials_per_sample_size),
+                          sample_size = seq(min_sample_size, max_sample_size, sample_size_inc)) %>%
+  mutate(simulation = pmap(.l = list(trial, sample_size),
+                           .f = ~rnorm(.y, mean = mu_0, sd = sigma_0))) %>%
+  mutate(sample_md = map_dbl(.x = simulation, .f = median))  %>%
+  group_by(sample_size) %>%
+  summarise(msq_error_md = mean((sample_md - mu_0) ^ 2))
+```
+
+## 2 (Q1) \
+The population median of a Gaussian random variable is **0.9997083**.
+
+## 2 (Q2) \
+```{r}
+set.seed(0)
+num_trials_per_sample_size <- 1000
+min_sample_size <- 30
+max_sample_size <- 500
+sample_size_inc <- 5
+mu_0 <- 1
+sigma_0 <- 3
+
+simulation_df2 <- crossing(trial = seq(num_trials_per_sample_size),
+                          sample_size = seq(min_sample_size, max_sample_size, sample_size_inc)) %>%
+  mutate(simulation = pmap(.l = list(trial, sample_size),
+                           .f = ~rnorm(.y, mean = mu_0, sd = sigma_0))) %>%
+  mutate(sample_md = map_dbl(.x = simulation, .f = median),
+         sample_mn = map_dbl(.x = simulation, .f = mean))  %>%
+  group_by(sample_size) %>%
+  summarise(msq_error_md = mean((sample_md - mu_0) ^ 2),
+            msq_error_mn = mean((sample_mn - mu_0) ^ 2))
+```
+
+```{r}
+d <- simulation_df2 %>% 
+  pivot_longer(!sample_size, names_to = "Estimator", values_to = "Mean square error")
+
+ggplot(d, aes(x = sample_size, y = `Mean square error`, color = Estimator, linetype = Estimator)) +
+  geom_smooth() +
+  xlab("Sample size")
+```
 
 # 3. (**) The law of large numbers and Hoeffding’s inequality
 
 ## 3 (Q1)
-
+Let's assume that $Var(X) = \sigma ^ 2$ is finite. In this case, we can use Chebyshev's inequality to write, \
+$$P(|\overline{X}-\mu| \geq \epsilon) \leq \frac{\mathrm{Var}(\overline{X})}{\epsilon ^ 2}$$
+$$= \frac{\mathrm{Var}(X)}{n \epsilon^2}$$
+Which goes to zero as $n \rightarrow \infty$.
 
 
 
