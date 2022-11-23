@@ -1,0 +1,160 @@
+---
+title: "Assignment 8"
+author: "Vishal"
+date: "2022-11-23"
+output: html_document # you can change to other output format if you want
+---
+
+```{r setup, include=FALSE, warning = F, message = F}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(PairedData)
+library(ggplot2)
+library(lsr)
+library(palmerpenguins)
+```
+
+# 1. Continuous random variables and limit laws
+
+## 1.1 (Q1)
+
+
+....
+
+## 1.1 (Q2)
+
+....
+
+## 1.1 (Q3)
+
+....
+
+## 1.3 (Q1)
+
+....
+
+
+# 2. paired t-test and effect size
+```{r}
+data("Barley")
+detach('package:PairedData', unload = T)
+detach('package:MASS', unload = T)
+
+head(Barley)
+```
+
+## 2 (Q1)
+```{r}
+t.test(Barley$Glabron, Barley$Velvet, conf.level = 0.01)
+
+```
+
+## 2 (Q1)
+```{r}
+cohensD(Barley$Glabron, Barley$Velvet)
+```
+## 2 (Q3)\
+There are three assumptions made in t-test. They are as follows:\
+**1. Independence:** It assumes that each observation is independent of each other.\
+**2. Normality:** The difference between the pairs is assumed to be normally distributed.
+**3. No extreme outliers:** There shouldn't be any extreme outliers in the differences.\
+
+
+# 3. Implementing unpaired t-test
+```{r}
+peng_AC <- penguins %>% 
+  drop_na(species,body_mass_g) %>% 
+  filter(species != "Gentoo") 
+head(peng_AC %>% select(species, flipper_length_mm, body_mass_g), 5)
+```
+```{r}
+val_col <- "body_mass_g"
+group_col <- "species"
+data <- peng_AC
+
+data_new <- data %>%
+  rename(group = (!!group_col), val = (!!val_col)) %>%
+  group_by(group) %>%
+  drop_na(val) %>%
+  summarise(mn = mean(val))
+
+data_new
+```
+
+```{r}
+t_test_function <- function(data, val_col, group_col, val_equal = F) {
+  
+  temp <- data %>%
+    rename(group = (!!group_col), val = (!!val_col)) %>%
+    group_by(group) %>%
+    drop_na(val) %>%
+    summarise(mn = mean(val), sd = sd(val), vr = var(val), sample_size = n())
+  
+  if (val_equal == F) {
+    print("Calculating using Student's t-test")
+    sd_combined <- sqrt(((temp$sample_size[1] - 1) * temp$sd[1] ^ 2 +
+                          (temp$sample_size[2] - 1) * temp$sd[2] ^ 2) /
+                          (temp$sample_size[1] + temp$sample_size[2] - 2))
+    
+    t_stat <- (temp$mn[1] - temp$mn[2]) / (sd_combined * sqrt(1 / temp$sample_size[1] + 1 / temp$sample_size[2]))
+    effect_size <- (temp$mn[1] - temp$mn[2]) / (sd_combined)
+    p_val <- 2 * (1 - pt(abs(t_stat), df = temp$sample_size[1] + temp$sample_size[2] - 2))
+    
+    result_df <- data.frame(t_stat = t_stat, effect_size = effect_size, p_val = p_val)
+    return(result_df)
+  } 
+  
+  else {
+    t_stat <- (temp$mn[1] - temp$mn[2]) / (sqrt(((temp$sd[1] ^ 2) / temp$sample_size[1]) + 
+                                           ((temp$sd[2] ^ 2) / temp$sample_size[2])))
+    effect_size <- (temp$mn[1] - temp$mn[2]) / sqrt((temp$vr[1] + temp$vr[2])/ 2)
+    p_val <- 2 * (1 - pt(abs(t_stat), df = temp$sample_size[1] + temp$sample_size[2] - 2))
+    
+    result_df <- data.frame(t_stat = t_stat, effect_size = effect_size, p_val = p_val)
+    return(result_df)
+  }
+}
+
+t_test_function(peng_AC, val_col = "body_mass_g", group_col = "species", val_equal = T)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

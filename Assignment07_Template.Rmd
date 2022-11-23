@@ -2,9 +2,10 @@
 title: "Assignment07"
 author: "Vishal"
 date: "2022-11-16"
-output: html_document
+output: pdf_document
 ---
 
+<<<<<<< HEAD
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 ```
@@ -16,6 +17,8 @@ library(Stat2Data)
 library(tidyverse)
 data("Hawks")
 ```
+
+# 1. Maximum likelihood estimates
 
 ## 1.1 (Q1)
 ```{r}
@@ -54,6 +57,140 @@ mle_calc <- function(X, X_bar, len) {
   mleVal = sum((X - X_bar) ^ 2) / len
   return(mleVal)
 }
+RedTailedDfVector <- RedTailedDf$Tail
+n <- length(RedTailedDfVector)
+mu_mle <- mean(RedTailedDfVector)
+sigma_mle <- sd(RedTailedDfVector) * sqrt((n - 1) / n)
+
+mu_mle
+sigma_mle
+```
+
+## 1.1 (Q3)
+```{r}
+density_df <- data.frame(Length = RedTailedDfVector) %>%
+  mutate(pdf = map_dbl(.x = Length, .f = ~dnorm(.x, mean = mu_mle, sd = sigma_mle)))
+
+
+colors <- c("MLE Density" = "red", "Kernel Density" = "blue")
+
+density_df %>%
+  ggplot() +
+  geom_line(aes(x = Length, y = pdf, color = "MLE Density")) +
+  geom_density(aes(x = Length, color = "Kernel Density")) +
+  scale_color_manual(values = colors) +
+  labs(y = "Tail length (mm)") +
+  theme_bw()
+```
+
+## 1.2 (Q1)
+```{r}
+df <- data.frame(sampleSize = rep(seq(5, 100, 5), each = 1000)) %>%
+  mutate(sample = map(.x = sampleSize, ~(rnorm(.x, 1, 3))),
+         mu = map_dbl(.x = sample, .f = mean),
+         v_mle = map_dbl(.x = sample, .f = sd),
+         v_u = map_dbl(.x = sample, .f = var))
+
+d <- df %>%
+  group_by(sampleSize) %>%
+  summarise(across(c(v_mle, v_u), mean)) %>%
+  pivot_longer(!sampleSize, names_to = "attr", values_to = "Values")
+
+head(d)
+ggplot(d, aes(x = sampleSize, y = Values, color = attr)) +
+  geom_line()
+```
+## 1.2 (Q2)
+```{r}
+df <- data.frame(sampleSize = rep(seq(5, 100, 5), each = 1000)) %>%
+  mutate(sample = map(.x = sampleSize, ~(rnorm(.x, 1, 3))),
+         mu = map_dbl(.x = sample, .f = mean),
+         v_mle = map_dbl(.x = sample, .f = sd),
+         v_u = map_dbl(.x = sample, .f = var),
+         v_u_sqrt = map_dbl(.x = v_u, .f = sqrt))
+
+d <- df %>%
+  group_by(sampleSize) %>%
+  summarise(across(c(v_mle, v_u_sqrt), mean)) %>%
+  pivot_longer(!sampleSize, names_to = "attr", values_to = "Values")
+
+head(d)
+ggplot(d, aes(x = sampleSize, y = Values, color = attr)) +
+  geom_line()
+```
+\
+As it can be seen in the above graph, $\sqrt{Vu}$ is not an unbiased estimator of for $\sigma_0$. Calculating the sample variance treats the sample mean as the true mean, where there's an uncertainty about the true mean. This is why square root of variance is not a good estimator.
+
+## 1.3 Maximum likelihood estimation with the Poisson distribution
+
+## 1.3 (Q1)
+$$f(x)=\frac{{\lambda}^{x}{e}^{-\lambda}}{x!} x=0, 1, 2,$$
+$$L(\lambda)=\prod_{i=1}^{n}\frac{{\lambda}^{{x}_{i}}{e}^{-\lambda}}{{x}_{i}!} = {e}^{-n\lambda} \frac{{\lambda}^{\sum_{1}^{n}{x}_{i}}}{\prod_{i=1}^{n}{x}_{i}}$$
+$$lnL(\lambda)=-n\lambda+\sum_{1}^{n}{x}_{i}ln(\lambda)-ln\left(\prod_{i=1}^{n}{x}_{i}\right)$$
+$$\frac{dlnL(\lambda)}{dp}=-n+\sum_{1}^{n}{x}_{i}\frac{1}{\lambda}$$
+
+$$\hat{\lambda}=\frac{\sum_{i=1}^{n}{x}_{i}}{n}$$
+
+## 1.3 (Q2)
+Suppose that $X = (X_1, X_2, ..., X_n)$ are iid observations from a Poisson distribution with unknown parameter $\lambda$. The likelihood function is\
+$$\begin{aligned} L(\lambda) =\prod\limits_{i=1}^{n} f\left(x_{i} ; \lambda\right) =\prod\limits_{i=1}^{n} \dfrac{\lambda^{x_{i}} e^{-\lambda}}{x_{i} !}  =\dfrac{\lambda^{\sum_i x_{i}} e^{-n \lambda}}{x_{1} ! x_{2} ! \cdots x_{n} !} \end{aligned}$$
+The corresponding loglikelihood function is\
+$$\sum\limits_{i=1}^{n} x_i\log\lambda-n\lambda-\sum\limits_{i=1}^{n} x_i!$$
+And the MLE for $\lambda$ can then be found by maximizing either of these with respect to $\lambda$. Setting the first derivative equal to 0 gives the solution:
+$$\hat{\lambda}=\sum\limits_{i=1}^{n} \dfrac{x_i}{n}$$
+
+Thus, for a Poisson sample, the MLE for $\lambda$ is just the sample mean.
+
+## 1.3 (Q3)
+```{r}
+dfPoisson <- data.frame(data = rpois(1000, 0.5))
+
+dfPoisson %>%
+  ggplot(aes(x = data)) +
+  geom_histogram(bins = 30) +
+  labs(y = "Count", x = "data")
+
+```
+# 1.3 (Q4)
+```{r}
+df_VonBortkiewicz <- read.csv("VonBortkiewicz.csv")
+head(df_VonBortkiewicz)
+```
+
+```{r}
+# likelihood of single data point
+#likelihood <- data.frame(data = dpois(df_VonBortkiewicz$fatalities[1], seq(20)))
+
+likelihood <- dpois(df_VonBortkiewicz$fatalities[1], seq(20))
+
+lh_single <- data.frame(x = seq(0, 9.5, 0.5), likelihood = likelihood)
+
+head(lh_single)
+
+lh_single %>%
+  ggplot(aes(x = x, y = likelihood)) +
+  geom_point(size = 3, color = "blue") +
+  labs(x = "Lambda", y = "Likelihood") +
+  theme_bw()
+#ggplot(horseFatilities, aes(x = data)) +
+#  geom_histogram(bins = 100)
+
+## Log likelihood of single data point
+log_likelihood <- dpois(df_VonBortkiewicz$fatalities[1], seq(20), log = T)
+llh_single <- data.frame(x = seq(0, 9.5, 0.5), log_like = log_likelihood)
+
+llh_single %>%
+  ggplot(aes(x = x, y = log_like)) +
+  geom_point(size = 3, color = "red") +
+  labs(x = "Lambda", y = "Log likelihood") +
+  theme_bw()
+
+```
+```{r}
+llh_poisson <- function(lambda, y) {
+  llh <- sum(dpois(y, lambda, log = T))
+  return(llh)
+}
 ```
 
 ```{r}
@@ -67,35 +204,204 @@ head(samples)
 ```
 
 ```{r}
+lambdas <- seq(0, 9.5, 0.5)
+```
 
+```{r}
+ll <- sapply(lambdas, function(x) {llh_poisson(x, df_VonBortkiewicz$fatalities)})
 
+df <- data.frame(ll = ll, lambda = lambdas)
+```
+
+```{r}
+df %>%
+  ggplot(aes(x = lambda, y = ll)) +
+  geom_point(size = 4, color = "blue") +
+  labs(x = "Lambda", y = "Log likelihood") +
+  geom_vline(xintercept = lambdas[which.max(ll)], color = "red", size = 2) +
+  theme_bw()
+```
+From above graph, we can see that $\lambda = 0.5$.
+
+```{r}
+df_VonBortkiewicz_I <- df_VonBortkiewicz %>%
+  filter(corps == 'I')
+
+noFatilities <- data.frame(data = dpois(df_VonBortkiewicz_I$fatalities, 0.5))
+noFatilities %>%
+  ggplot(aes(x = data)) +
+  geom_histogram(bins = 10)
+```
+
+## 1.4 Maximum likelihood estimation for the exponential distribution
+
+## 1.4 (Q1)
+$$\mathcal{L}(\lambda,x_1,\dots,x_n)=\prod_{i=1}^n f(x_i,\lambda)=\prod_{i=1}^n \lambda e^{-\lambda x}=\lambda^ne^{-\lambda\sum_{i=1}^nx_i}$$
+Maximum likelihood estimator:\
+$$\frac{d\ln\left(\mathcal{L}(\lambda,x_1,\dots,x_n)\right)}{d\lambda}\overset{!}{=}0$$
+$$\frac{d\ln\left(\mathcal{L}(\lambda,x_1,\dots,x_n)\right)}{d\lambda} =\frac{d\ln\left(\lambda^ne^{-\lambda\sum_{i=1}^nx_i}\right)}{d\lambda} \\
+= \frac{d\ln\left(n\ln(\lambda)-\lambda\sum_{i=1}^n x_i\right)}{d\lambda} \\
+= \frac{n}{\lambda}-\sum_{i=1}^n x_i$$
+
+Which equals to,\
+$$\lambda = \frac{n}{\sum\limits_{i=1}^n x_i}$$
+## 1.4 (Q2)
+```{r}
+df_CustomerPurchases <- read.csv("CustomerPurchase.csv")
+
+df_CustomerPurchases$lead <- lead(df_CustomerPurchases$Time)
+df_CustomerPurchases$time_diffs <- df_CustomerPurchases$lead - df_CustomerPurchases$Time
+df_CustomerPurchases <- select(df_CustomerPurchases, -lead)
+
+head(df_CustomerPurchases)
+```
+## 1.4 (Q3)
+```{r}
+exp_mle <- 1 / mean(df_CustomerPurchases$time_diffs, na.rm = T)
+exp_mle
+```
+
+## 1.4 (Q4)
+```{r}
+moreThanMin <- filter(df_CustomerPurchases, time_diffs > 60)
+head(moreThanMin)
+
+dist <- data.frame(data = pexp(df_CustomerPurchases$time_diffs, rate = 0.02)) %>%
+  mutate(time_diff = df_CustomerPurchases$time_diffs)
+
+ggplot(dist, aes(x = time_diff, y = data)) +
+  geom_point()
+```
+
+# 2. Confidence intervals
+## 2.1 Student's t-confidence intervals#
+
+## 2.1 (Q1)
+
+1. If the sample mean increases, width of confidence interval will not change.\
+2. If the sample standard deviation was higher, the width of confidence interval would have increased.\
+3. The width of confidence interval decreases when the sample size increases.\
+
+## 2.1 (Q2)
+
+```{r}
+HawksVector <- Hawks %>%
+  filter(Species == "RT") %>%
+  pull(Weight)
+
+HawksVector <- HawksVector[!is.na(HawksVector)]
+head(HawksVector)
+```
+
+```{r}
+alpha <- 0.01
+sample_size <- length(HawksVector)
+sample_mean <- mean(HawksVector)
+sample_sd <- sd(HawksVector)
+t <- qt(1 - alpha / 2, df = sample_size - 1)
+# confidence interval
+confidence_interval_l <- sample_mean - t * sample_sd / sqrt(sample_size)
+confidence_interval_u <- sample_mean + t * sample_sd / sqrt(sample_size)
+confidence_interval <- c(confidence_interval_l, confidence_interval_u)
+confidence_interval
 ```
 
 
+```{r}
+DF <- length(HawksVector) - 1
+alpha <- 0.01
+t = qt(1 - alpha / 2, DF)
+t
+
+t.test(HawksVector, conf.level = 0.99)
+```
+```{r}
+
+tempDf <- data.frame(x = HawksVector) %>%
+  mutate(pdf = map_dbl(.x = x, ~dnorm(.x, mean(HawksVector), sd(HawksVector))))
+
+ggplot(data = tempDf, aes(x = x)) +
+  geom_density() 
+
+ggplot(tempDf, aes(sample = x)) + 
+  stat_qq() +
+  stat_qq_line()
+```
+
+## 2.2 Investigating coverage for Student’s t intervals
+## 2.2 (Q1)
+
+```{r}
+student_t_confidence_interval <- function(sample, confidence_level) {
+  sample <- sample[!is.na(sample)] # remove any missing values
+  n <- length(sample) # compute sample size
+  mu_est <- mean(sample) # compute sample mean
+  sig_est <- sd(sample) # compute sample sd
+  alpha = 1 - confidence_level # alpha from gamma
+  t <- qt(1 - alpha / 2, df = n - 1) # get student t quantile
+  l = mu_est - (t / sqrt(n)) * sig_est # lower
+  u = mu_est + (t / sqrt(n)) * sig_est # upper
+  return(c(l, u))
+}
+```
+
+```{r}
+num_trials <- 100000
+sample_size <- 30
+mu_0 <- 1
+sigma_0 <- 3
+alpha <- seq(0.01, 0.09, 0.01)
+set.seed(0) # set random seed for reproducibility
 
 
+probEstimate <- function(num_trials, sample_size, mu_0, alpha) {
+  single_alpha_coverage_simulation_df <- data.frame(trial = seq(num_trials)) %>%
+    mutate(sample = map(.x =  trial,.f = ~rnorm(n = sample_size, mean = mu_0, sd = sigma_0))) %>%
+    mutate(ci_interval = map(.x = sample, .f = ~student_t_confidence_interval(.x, 1 - alpha)))%>%
+    mutate(cover = map_lgl(.x = ci_interval, .f = ~((min(.x) <= mu_0) & (max(.x) >= mu_0))))%>%
+    mutate(ci_length = map_dbl(.x = ci_interval, .f = ~(max(.x) - min(.x))))
+  
+  
+  val <- single_alpha_coverage_simulation_df %>%
+    pull(cover) %>%
+    mean()
+  return(val)
+}
 
+lu_vec <- c()
+gamma_vec <- c()
 
+for(i in alpha) {
+  g <- probEstimate(num_trials, sample_size, mu_0, i)
+  g
+}
+```
+# 3. One sample hypothesis testing
+## 3.1 One sample t-test on penguins data
 
+## 3.1 (Q1)
+```{r}
+library(palmerpenguins)
+data(package = 'palmerpenguins')
+head(penguins)
+```
+```{r}
+bill_adelie <- penguins %>%
+  filter(species == "Adelie") %>%
+  pull(bill_length_mm)
 
+t.test(bill_adelie, mu = 40, conf.level = 0.01)
+```
 
+## 3.2 Implementing a one-sample t-test
+## 3.2 (Q1)
+```{r}
+p_val_calc <- function(x, mu) {
+  mn <- mean(x, na.rm = T)
+  t = (mn - mu) / (sd(x, na.rm = T) / sqrt(length(x)))
+  p = 2 * (1 - pt(abs(t), df = length(x) - 1))
+  return(p)
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+p_val_calc(bill_adelie, 40)
+```
