@@ -118,6 +118,19 @@ t_test_function <- function(data, val_col, group_col, val_equal = F) {
 t_test_function(peng_AC, val_col = "body_mass_g", group_col = "species", val_equal = T)
 ```
 
+# 4. Useful concepts in statistical hypothesis testing
+## 4 (Q1)
+
+**1. Null hypothesis:** The null hypothesis is a typical statistical theory which suggests that no statistical relationship and significance exists in a set of given single observed variable, between two sets of observed data and measured phenomena.\
+
+**2. Alternative hypothesis:** The alternative hypothesis is a statement used in statistical inference experiment. It is contradictory to the null hypothesis and denoted by Ha or H1. We can also say that it is simply an alternative to the null. In hypothesis testing, an alternative theory is a statement which a researcher is testing. This statement is true from the researcher’s point of view and ultimately proves to reject the null to replace it with an alternative assumption. In this hypothesis, the difference between two or more variables is predicted by the researchers, such that the pattern of data observed in the test is not due to chance. \
+
+**3. Test statistic:** A test statistic describes how closely the distribution of your data matches the distribution predicted under the null hypothesis of the statistical test you are using. \
+
+**4. Type 1 error:** Type I error is a false positive conclusion. So, if the researcher incorrectly rejects a true null hypothesis it is called as "Type I error".
+
+**5. Type 2 error:** Type II error is a false negative conclusion. It occurs when a researcher fails to reject a null hypothesis which is really false.
+
 
 
 
