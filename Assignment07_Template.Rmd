@@ -1,30 +1,101 @@
 ---
-title: "Assignment07_Template"
+title: "Assignment07"
 author: "Vishal"
 date: "2022-11-16"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
 ```
 
-## R Markdown
+# 1. Maximum likelihood estimates
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(Stat2Data) 
+library(tidyverse)
+data("Hawks")
 ```
 
-## Including Plots
+## 1.1 (Q1)
+```{r}
+RedTailedDf <- Hawks %>%
+  filter(Species == "RT") %>%
+  select(Weight, Tail, Wing)
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+head(RedTailedDf)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## 1.1 (Q2)
+```{r}
+RedTailedVector <- RedTailedDf$Tail
+mu_RedTailedVector <- mean(RedTailedVector)
+sigma_RedTailedVector <- sd(RedTailedVector)
+
+mle <- sum((RedTailedVector - mu_RedTailedVector) ^ 2) / length(RedTailedVector)
+
+guassian_df <- data.frame(Length = RedTailedVector) %>%
+  mutate(pdf = map_dbl(Length, ~dnorm(.x, mu_RedTailedVector, sigma_RedTailedVector)))
+
+colors <- c("MLE density" = "red", "Kernel density" = "blue")
+
+p <- ggplot() + labs(y = "Tail Length (mm)") + theme_bw() +
+  geom_density(data = guassian_df, aes(Length, color = "Kernel density"))
+
+p +
+  geom_line(data = guassian_df, aes(Length, pdf, color = "MLE density")) +
+  scale_color_manual(values = colors)
+```
+
+## 1.1 (Q3)
+
+```{r}
+mle_calc <- function(X, X_bar, len) {
+  mleVal = sum((X - X_bar) ^ 2) / len
+  return(mleVal)
+}
+```
+
+```{r}
+samples <- data.frame(sample_size = rep(seq(5, 100, 5), each = 1000)) %>%#(temp = seq(5, 100, 5)) %>%
+  mutate(sample_X = map(sample_size, ~rnorm(.x, 1, 3)),
+         X_bar = map_dbl(sample_X, mean),
+         V_mle = map_dbl(sample_X, ~mle_calc(.x, mean(.x), length(.x))),
+         V_u = map_dbl(sample_X, ~mle_calc(.x, mean(.x), (length(.x) - 1))))
+
+head(samples)
+```
+
+```{r}
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
