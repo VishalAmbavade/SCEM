@@ -2,7 +2,7 @@
 title: "Assignment 8"
 author: "Vishal"
 date: "2022-11-23"
-output: html_document # you can change to other output format if you want
+output: pdf_document # you can change to other output format if you want
 ---
 
 ```{r setup, include=FALSE, warning = F, message = F}
@@ -14,24 +14,25 @@ library(lsr)
 library(palmerpenguins)
 ```
 
-# 1. Continuous random variables and limit laws
+# 1. Obstacles to valid scientific inference
 
 ## 1.1 (Q1)
 
+**1. Measurement distortions: **\
+The measurement of a test is the probability that the test will reject the null hypothesis. When, in fact, a real difference is to be found.\
+E.g. 
 
-....
+**2. Selection bias: **\
+Sample selection bias is a type of bias caused by choosing non-random data for statistical analysis. The bias exists due to a flaw in the sample selection process, where a subset of the data is systematically excluded due to a particular attribute.\
 
-## 1.1 (Q2)
+E.g. In a study of smoking and chronic lung disease, theassociation of exposure with disease will tend to be weaker if controls are selected from a hospital population (because smoking causes many diseases resulting in hospitalization) than if controls are selected from the community.\
+In this example, hospital controls do not represent the prevalence of
+exposure (smoking) in the community from which cases of chronic lung disease arise. The exposure-disease association has been distorted by selection of hospital controls.\
 
-....
+**3. Confounding variables: **\
+A confounding variable is a third variable that influences both the independent and dependent variables. Failing to account for confounding variables can cause you to wrongly estimate the relationship between your independent and dependent variables.\
 
-## 1.1 (Q3)
-
-....
-
-## 1.3 (Q1)
-
-....
+Let's say we take test of 200(100 boys and 100 girls) school students. We found that lack of excercise leads to weight gain. One problem with this experiment is that it lacks control variables. For example, the use of placebos, or random assignments to groups. So you really can’t say for sure whether lack of exercise leads to weight gain. One confounding variable is how much people eat. It’s also possible that boys eat more than girls; this could also make sex a confounding variable. Nothing was mentioned about starting weight, occupation or age either. A poor study design like this could lead to bias. For example, if all of the girls in the study were teen-aged, and all of the boys were aged 10, age would have a direct effect on weight gain. That makes age a confounding variable. \
 
 
 # 2. paired t-test and effect size
@@ -125,34 +126,358 @@ t_test_function(peng_AC, val_col = "body_mass_g", group_col = "species", val_equ
 
 **2. Alternative hypothesis:** The alternative hypothesis is a statement used in statistical inference experiment. It is contradictory to the null hypothesis and denoted by Ha or H1. We can also say that it is simply an alternative to the null. In hypothesis testing, an alternative theory is a statement which a researcher is testing. This statement is true from the researcher’s point of view and ultimately proves to reject the null to replace it with an alternative assumption. In this hypothesis, the difference between two or more variables is predicted by the researchers, such that the pattern of data observed in the test is not due to chance. \
 
-**3. Test statistic:** A test statistic describes how closely the distribution of your data matches the distribution predicted under the null hypothesis of the statistical test you are using. \
+**3. Test statistic: ** A test statistic describes how closely the distribution of your data matches the distribution predicted under the null hypothesis of the statistical test you are using. \
 
-**4. Type 1 error:** Type I error is a false positive conclusion. So, if the researcher incorrectly rejects a true null hypothesis it is called as "Type I error".
+**4. Type 1 error: ** Type I error is a false positive conclusion. So, if the researcher incorrectly rejects a true null hypothesis it is called as "Type I error". \
 
-**5. Type 2 error:** Type II error is a false negative conclusion. It occurs when a researcher fails to reject a null hypothesis which is really false.
+**5. Type 2 error: ** Type II error is a false negative conclusion. It occurs when a researcher fails to reject a null hypothesis which is really false. \
+
+**6. The size of a test: ** It is the maximum probability of committing a Type I error i.e. incorrectly rejecting a true null hypothesis when it is true. \
+
+**7. The power of a test: ** It is the probability of making a correct decision if the alternative hypothesis is true i.e. it is the probability of rejecting the null hypothesis when the alternative hypothesis is true. \
+
+**8. The significance level: ** The significance level for a given hypothesis testing is a value for which a p-value less than or equal to is considered statistically significant. \
+
+**9. The p-value: ** It is the probability of obtaining results at least as extreme as the observed results of a statistical hypothesis test, assuiming that the null hypothesis is correct. \
+
+**10. Effect size: ** It measures the strength of the relationship between two variables on a numeric scale. In statistics analysis, the effect size is usually measured using either standardized mean difference, odd ratio or correlation coefficient. \
+
+## 4 (Q2)
+(1) Yes, the p-value is the probability that the null hypothesis is true. Whereas, the (1 - p-value) is the probability that the alternative hypothesis is true. \
+
+(2) If p-value is less than 0.05 then is considered to be statistically significant and the null hypothesis is rejected. Although, if the p-value is greater than 0.05 (i.e. significance level) means that deviation from the null hypothesis is not statistically significant and the null hypothesis is not rejected. \
+
+# 5. Investigating test size for an unpaired Student's t-test
+
+```{r}
+s_sizes <- seq(10, 200, 10)
+
+sampleSizesVec <- c()
+probVec <- c()
+
+for (i in s_sizes) {
+  num_trials <- 10000
+  sample_size <- i
+  mu_0 <- 1
+  mu_1 <- 1
+  sigma_0 <- 3
+  sigma_1 <- 3
+  alpha <- 0.05
+  set.seed(0) # set random seed for reproducibility
+  
+  single_alpha_test_size_simulation_df <- data.frame(trial =
+                                                       seq(num_trials)) %>%
+    mutate(sample_0=map(.x = trial, .f = ~rnorm(n = sample_size, mean =
+                                                  mu_0, sd = sigma_0)),
+    sample_1=map(.x = trial, .f = ~rnorm(n = sample_size, mean = mu_1, sd =
+                                           sigma_1))) %>%
+    # generate p values
+    mutate(p_value = pmap(.l = list(trial, sample_0, sample_1),
+                          .f = ~t.test(..2, ..3, var.equal =
+                                         TRUE)$p.value))%>%
+    # type I error
+    mutate(type_1_error = p_value < alpha)
+  
+  prob <- single_alpha_test_size_simulation_df %>%
+    pull(type_1_error) %>%
+    mean() # estimate of coverage probability
+  
+  sampleSizesVec <- c(sampleSizesVec, i)
+  probVec <- c(probVec, prob)
+}
+
+probssDf <- data.frame(sample_size = sampleSizesVec, prob = probVec)
+head(probssDf)
+```
+## 5 (Q1)
+```{r}
+ggplot(probssDf, aes(x = sample_size, y = prob)) +
+  geom_point() +
+  theme_bw()
+```
+# 6. The statistical power of an unpaired t-test
+```{r}
+alphas = seq(0.01, 0.99, 0.01)
+
+alphaVec <- c()
+probVec <- c()
+
+for (i in alphas) {
+  num_trials <- 10000
+  n_0 <- 30
+  n_1 <- 30
+  mu_0 <- 3
+  mu_1 <- 4
+  sigma_0 <- 2
+  sigma_1 <- 2
+  alpha <- i
+  set.seed(0) # set random seed for reproducibility
+    
+  multiple_alpha_stat_power_simulation_df <- data.frame(trial = seq(num_trials)) %>%
+    # generate random Gaussian samples
+    mutate(sample_0 = map(.x = trial, .f =~ rnorm(n = n_0, mean = mu_0, 
+                                                  sd = sigma_0)),
+           sample_1 = map(.x = trial, .f =~ rnorm(n = n_1, mean = mu_1,
+                                                  sd = sigma_1))) %>%
+    # for each sample, generate p value; check examples of pmap() with ?map
+    mutate(p_value = pmap(.l = list(trial, sample_0, sample_1), 
+                          .f =~ t.test(..2, ..3, var.equal =
+                                         TRUE)$p.value)) %>%
+    # estimate of coverage probability
+    mutate(reject_null = p_value < alpha )
+  
+  prob <- multiple_alpha_stat_power_simulation_df %>%
+    # extract a column
+    pull(reject_null) %>%
+    # compute probability
+    mean()
+  
+  probVec <- c(probVec, prob)
+  alphaVec <- c(alphaVec, i)
+  
+  probsDf2 <- data.frame(alpha = alphaVec, prob = probVec)
+  head(probsDf2)
+}
+```
 
 
+## 6 (Q1)
+```{r}
+ggplot(probsDf2, aes(x = alpha, y = prob)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  labs(y = "Statastical Power", x = "Significance level")
+```
 
+## 6 (Q2)
+```{r}
+means <- seq(3, 13, 1)
 
+mean_diff <- c()
+probs <- c()
 
+for (i in means) {
+  num_trials <- 10000
+  n_0 <- 30
+  n_1 <- 30
+  mu_0 <- 3
+  mu_1 <- i
+  sigma_0 <- 2
+  sigma_1 <- 2
+  alpha <- 0.05
+  set.seed(0) # set random seed for reproducibility
+    
+  mean_diff_stat_power_simulation_df <- data.frame(trial =
+                                                     seq(num_trials)) %>%
+    # generate random Gaussian samples
+    mutate(sample_0 = map(.x = trial, .f =~ rnorm(n = n_0, mean = mu_0, 
+                                                  sd = sigma_0)),
+           sample_1 = map(.x = trial, .f =~ rnorm(n = n_1, mean = mu_1,
+                                                  sd = sigma_1))) %>%
+    # for each sample, generate p value; check examples of pmap() with ?map
+    mutate(p_value = pmap(.l = list(trial, sample_0, sample_1), 
+                          .f =~ t.test(..2, ..3, var.equal =
+                                         TRUE)$p.value)) %>%
+    # estimate of coverage probability
+    mutate(reject_null = p_value < alpha )
+  
+  prob <- mean_diff_stat_power_simulation_df %>%
+    # extract a column
+    pull(reject_null) %>%
+    # compute probability
+    mean()
+  
+  mean_diff <- c(mean_diff, abs(mu_0 - mu_1))
+  probs <- c(probs, prob)
+  
+  probsDf3 <- data.frame(mean_diff = mean_diff, prob = probs)
+}
+head(probsDf3)
+```
+```{r}
+ggplot(probsDf3, aes(x = mean_diff, y = prob)) +
+  geom_line() +
+  geom_point() +
+  theme_bw() +
+  labs(y = "Statastical Power", x = "Difference in mean")
 
+```
+## 6 (Q3)
+```{r}
+sigmaVals <- seq(1, 11, 1)
 
+sigmaVec <- c()
+probs <- c()
 
+for (i in sigmaVals) {
+  num_trials <- 10000
+  n_0 <- 30
+  n_1 <- 30
+  mu_0 <- 3
+  mu_1 <- 4
+  sigma_0 <- i
+  sigma_1 <- i
+  alpha <- 0.05
+  set.seed(0) # set random seed for reproducibility
+    
+  sigma_vals_stat_power_simulation_df <- data.frame(trial =
+                                                     seq(num_trials)) %>%
+    # generate random Gaussian samples
+    mutate(sample_0 = map(.x = trial, .f =~ rnorm(n = n_0, mean = mu_0, 
+                                                  sd = sigma_0)),
+           sample_1 = map(.x = trial, .f =~ rnorm(n = n_1, mean = mu_1,
+                                                  sd = sigma_1))) %>%
+    # for each sample, generate p value; check examples of pmap() with ?map
+    mutate(p_value = pmap(.l = list(trial, sample_0, sample_1), 
+                          .f =~ t.test(..2, ..3, var.equal =
+                                         TRUE)$p.value)) %>%
+    # estimate of coverage probability
+    mutate(reject_null = p_value < alpha )
+  
+  prob <- sigma_vals_stat_power_simulation_df %>%
+    # extract a column
+    pull(reject_null) %>%
+    # compute probability
+    mean()
+  
+  sigmaVec <- c(sigmaVec, i)
+  probs <- c(probs, prob)
+  
+  probsDf4 <- data.frame(sigma = sigmaVec, prob = probs)
+}
+head(probsDf4)
+```
+```{r}
+ggplot(probsDf4, aes(x = sigma, y = prob)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Standard Deviation", y = "Statistical Power")
+```
 
+## 6 (Q4)
+```{r}
+sampleSizes <- seq(10, 200, 10)
 
+ssVec <- c()
+probs <- c()
 
+for (i in sampleSizes) {
+  num_trials <- 10000
+  n_0 <- i
+  n_1 <- i
+  mu_0 <- 3
+  mu_1 <- 4
+  sigma_0 <- 2
+  sigma_1 <- 2
+  alpha <- 0.05
+  set.seed(0) # set random seed for reproducibility
+    
+  sample_sizes_stat_power_simulation_df <- data.frame(trial =
+                                                     seq(num_trials)) %>%
+    # generate random Gaussian samples
+    mutate(sample_0 = map(.x = trial, .f =~ rnorm(n = n_0, mean = mu_0, 
+                                                  sd = sigma_0)),
+           sample_1 = map(.x = trial, .f =~ rnorm(n = n_1, mean = mu_1,
+                                                  sd = sigma_1))) %>%
+    # for each sample, generate p value; check examples of pmap() with ?map
+    mutate(p_value = pmap(.l = list(trial, sample_0, sample_1), 
+                          .f =~ t.test(..2, ..3, var.equal =
+                                         TRUE)$p.value)) %>%
+    # estimate of coverage probability
+    mutate(reject_null = p_value < alpha )
+  
+  prob <- sample_sizes_stat_power_simulation_df %>%
+    # extract a column
+    pull(reject_null) %>%
+    # compute probability
+    mean()
+  
+  ssVec <- c(ssVec, i)
+  probs <- c(probs, prob)
+  
+  probsDf5 <- data.frame(sampleSize = ssVec, prob = probs)
+}
+head(probsDf5)
+```
 
+```{r}
+ggplot(probsDf5, aes(x = sampleSize, y = prob)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  labs(x = "Sample size", y = "Statistical Power")
+```
 
+# 7. Comparing the paired and unpaired t-tests on paired data
 
+## 7 (Q1)
+```{r}
+alphas <- seq(0.01, 0.1, 0.01)
 
+alphasVec <- c()
+statPower1 <- c()
+statPower2 <- c()
 
+for (i in alphas) {
+  num_trials <- 10000
+  n_0 <- 30
+  n_1 <- 30
+  mu_0 <- 10
+  mu_1 <- 11
+  sigma_0 <- 5
+  sigma_1 <- 6
+  alpha <- i
+  set.seed(0) # set random seed for reproducibility
+    
+  alphas_stat_power_simulation_df <- data.frame(trial =
+                                                     seq(num_trials)) %>%
+    # generate random Gaussian samples
+    mutate(sample_0 = map(.x = trial, .f =~ rnorm(n = n_0, mean = mu_0, 
+                                                  sd = sigma_0)),
+           sample_1 = map(.x = trial, .f =~ rnorm(n = n_1, mean = mu_1,
+                                                  sd = sigma_1))) %>%
+    # for each sample, generate p value; check examples of pmap() with ?map
+    mutate(p_value = pmap(.l = list(trial, sample_0, sample_1), 
+                          .f =~ t.test(..2, ..3, paired = T, var.equal =
+                                         T)$p.value)) %>%
+    mutate(p_val_up = pmap(.l = list(trial, sample_0, sample_1), 
+                          .f =~ t.test(..2, ..3, paired = F, var.equal =
+                                         T)$p.value)) %>%
+    # estimate of coverage probability
+    mutate(reject_null = p_value < alpha) %>%
+    mutate(reject_null_up = p_val_up < alpha)
+  
+  prob1 <- alphas_stat_power_simulation_df %>%
+    # extract a column
+    pull(reject_null) %>%
+    # compute probability
+    mean()
+  
+  prob2 <- alphas_stat_power_simulation_df %>%
+    pull(reject_null_up) %>%
+    mean()
+  
+  alphasVec <- c(alphasVec, i)
+  statPower1 <- c(statPower1, prob1)
+  statPower2 <- c(statPower2, prob2)
+  
+  probsDf6 <- data.frame(alpha = alphasVec, statPower1 = statPower1, statPower2 = statPower2)
+}
+head(probsDf6)
 
+```
+```{r}
 
-
-
-
-
-
+colors <- c("Reject Null (Paired)" = "red", "Reject Null (Un-paired)" = "blue")
+ggplot(probsDf6, aes(x = alpha)) +
+  geom_line(aes(y = statPower1, color = "Reject Null (Paired)")) +
+  geom_line(aes(y = statPower2, color = "Reject Null (Un-paired)", type = 2)) +
+  theme_bw() +
+  scale_color_manual(name = "Legend", values = colors) +
+  labs(x = "Alpha", y = "Statistical Power")
+```
 
 
 
