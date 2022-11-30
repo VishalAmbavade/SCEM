@@ -1,0 +1,88 @@
+---
+title: "Assignment 9"
+author: "Vishal"
+date: "2022-11-30"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(Stat2Data)
+library(palmerpenguins)
+data(package = 'palmerpenguins')
+data("Hawks")
+```
+
+## 1. Basic concepts in classification
+http://ianmadd.github.io/pages/Confidence_Intervals_Part4.html
+
+
+## 2. A chi-squared test of populatinn variance
+```{r}
+#chi_square_test_one_sample_var <- function(sample, sigma_square_null) {
+#  dataLen <- length(sample) - 1
+#  sampleVar <- var(sample)
+#  popVar <- sigma_square_null
+  
+#  res <- dataLen * (sampleVar / popVar)
+#  return(res)
+#}
+```
+
+```{r}
+chi_square_test_one_sample_var <- function(sample, sigma_square_null) {
+  sample <- sample[!is.na(sample)]
+  n <- length(sample)
+  chi_squared_statistic <- (n - 1) * var(sample) / sigma_square_null
+  p_value <- 2 * min(pchisq(chi_squared_statistic, df = n - 1), 1 - pchisq(chi_squared_statistic, df = n - 1))
+  return(p_value)
+}
+```
+
+```{r}
+sample_size <- 100
+mu_0 <- 1
+sigma_0 <- 4
+
+df <- data.frame(trial = seq(0.01, 0.20, 0.01)) %>%
+  mutate(samples = map(.x = trial, .f = ~rnorm(n = sample_size, mean = mu_0, sd = sigma_0))) %>%
+  mutate(p_val = map_dbl(.x = samples, ~chi_square_test_one_sample_var(.x, sigma)))
+  
+
+#val <- df %>%
+#  pull(samples) %>%
+#  chi_square_test_one_sample_var(sample = ., sigma_square_null = sigma)
+df$p_val
+#df$p_val[df$p_val > 0.10]
+
+compute_p_value <- function(alpha) {
+  reject_null <- df$p_val[df$p_val < alpha]
+  return (mean(reject_null))
+}
+
+```
+
+```{r}
+multiple_alpha_df <- data.frame(alpha = seq(0.01, 0.20, 0.01)) %>%
+  mutate(test_size = map_dbl(alpha, compute_p_value))
+
+multiple_alpha_df
+
+
+```
+
+## 5
+
+```{r}
+bill_adelie <- penguins %>%
+  filter(species == "Adelie") %>%
+  pull(bill_length_mm)
+
+bill_adelie <- bill_adelie[!is.na(bill_adelie)]
+bill_adelie
+```
