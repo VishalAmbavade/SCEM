@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(Stat2Data) 
 library(tidyverse)
 data(Hawks)
+library(MASS)
 ```
 
 ```{r}
@@ -46,7 +47,24 @@ hawks_test_x <- hawks_test %>% select(-Species)
 hawks_test_y <- hawks_test %>% pull(Species)
 ```
 
+```{r}
+lda_model <- MASS::lda(Species ~ ., hawks_train)
+```
 
+```{r}
+lda_train_predicted_y <- predict(lda_model, hawks_train_x)$class %>%
+  as.character() %>% as.numeric()
+
+lda_train_error <- mean(abs(lda_train_predicted_y - hawks_train_y))
+lda_train_error
+```
+```{r}
+lda_test_predicted_y <- predict(lda_model, hawks_test_x)$class %>%
+  as.character() %>% as.numeric()
+
+lda_test_error <- mean(abs(lda_test_predicted_y - hawks_test_y))
+lda_test_error
+```
 
 
 
