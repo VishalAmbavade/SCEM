@@ -2,54 +2,69 @@
 title: "Assignment 10"
 author: "Vishal"
 date: "2022-12-07"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE, warning=F, message=F}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#1. Linear discriminant analysis
+# 1. Linear discriminant analysis
+
+## Q1.
+
+Probabilistic LDA is a generative model which assumes that given data samples are generated from a distribution (e.g. Gaussian distribution). We need to find the parameters of model which best describe the training data. 
 ```{r}
 library(Stat2Data) 
 library(tidyverse)
-data(Hawks)
 library(MASS)
+library(ggplot2)
+library(glmnet)
+library(QSARdata)
+data(Hawks)
 ```
 
 ```{r}
 hawks_total <- Hawks %>% 
-  select( Weight, Wing, Hallux, Tail, Species) %>% 
+  dplyr::select(Weight, Wing, Hallux, Tail, Species) %>% 
   filter(Species =='SS' | Species =='CH') %>% drop_na() %>% 
   mutate(Species = as.numeric(Species =='SS'))
 
-hawks_total
+head(hawks_total)
 ```
+
 ```{r}
 num_total <- hawks_total %>% nrow() 
-num_train <- floor(num_total*0.6) 
+num_train <- floor(num_total * 0.6) 
 num_test <- num_total-num_train 
 set.seed(0) 
-test_inds <- sample(seq(num_total),num_test) 
-train_inds <- setdiff(seq(num_total),test_inds) 
+test_inds <- sample(seq(num_total), num_test) 
+train_inds <- setdiff(seq(num_total), test_inds) 
 hawks_train <- hawks_total %>% 
   filter(row_number() %in% train_inds) 
 
-hawks_test <- hawks_total %>%  filter(row_number() %in% test_inds) 
+hawks_test <- hawks_total %>%  
+  filter(row_number() %in% test_inds) 
 ```
 
 
 ```{r}
-hawks_train_x <- hawks_train %>% select(-Species)
-hawks_train_y <- hawks_train %>% pull(Species)
+hawks_train_x <- hawks_train %>% 
+  dplyr::select(-Species)
+hawks_train_y <- hawks_train %>% 
+  pull(Species)
 
-hawks_test_x <- hawks_test %>% select(-Species)
-hawks_test_y <- hawks_test %>% pull(Species)
+hawks_test_x <- hawks_test %>% 
+  dplyr::select(-Species)
+hawks_test_y <- hawks_test %>% 
+  pull(Species)
 ```
 
 ```{r}
 lda_model <- MASS::lda(Species ~ ., hawks_train)
 ```
+
+## Q2.
 
 ```{r}
 lda_train_predicted_y <- predict(lda_model, hawks_train_x)$class %>%
@@ -66,39 +81,265 @@ lda_test_error <- mean(abs(lda_test_predicted_y - hawks_test_y))
 lda_test_error
 ```
 
+## Q3. 
 
+```{r}
+data("iris")
 
+iris_total <- iris %>%  drop_na() %>% 
+  mutate(Species = as.numeric(Species))
 
+head(iris_total)
+```
 
+```{r}
+num_total <- iris_total %>% nrow() 
+num_train <- floor(num_total * 0.6) 
+num_test <- num_total - num_train 
+set.seed(0) 
+test_inds <- sample(seq(num_total), num_test) 
+train_inds <- setdiff(seq(num_total), test_inds) 
+iris_train <- iris_total %>% 
+  filter(row_number() %in% train_inds) 
 
+iris_test <- iris_total %>%  filter(row_number() %in% test_inds) 
+```
 
+```{r}
+iris_train_x <- iris_train %>% dplyr::select(-Species)
+iris_train_y <- iris_train %>% pull(Species)
 
+iris_test_x <- iris_test %>% dplyr::select(-Species)
+iris_test_y <- iris_test %>% pull(Species)
+```
 
+```{r}
+lda_model <- MASS::lda(Species ~ ., iris_train)
+```
 
+```{r}
+lda_train_predicted_y <- predict(lda_model, iris_train_x)$class %>%
+  as.character() %>% as.numeric()
 
+lda_train_error <- mean(abs(lda_train_predicted_y - iris_train_y))
+lda_train_error
+```
+```{r}
+lda_test_predicted_y <- predict(lda_model, iris_test_x)$class %>%
+  as.character() %>% as.numeric()
 
+lda_test_error <- mean(abs(lda_test_predicted_y - iris_test_y))
+lda_test_error
+```
+# 2. Logistic regression
 
+## Q1. \
+We know that, in Logistic regression target variable follows Bernoulli distribution. Probability mass function of Bernoulli distribution is \
+$$\mathbb{P}(y) = p^y * (1 - p)^{(1 - y)}$$\
+We also know that, Generalized Linear Model is of the form:\
+$$y = w^Tx + \epsilon \\
+i.e. f(E(y)) = w^Tx$$ \
 
+Logit function is a link function in this kind of Generalized Linear Models. Logit function is defined as : log(odds) i.e. \
+**odds = (success/failure)**. \
 
+$$odds = \frac{p}{(1 - p)} \\
+log(odds) = log (\frac{p}{1 - p})\\
+\Rightarrow f(p) = log(\frac{p}{1 - p})$$
 
+For Bernoulli distribution $E(y) = p$. Hence equation becomes, $f(E(y)) = f(p)$ \
 
+$$f(p) = f(E(y)) \\
+log(frac{p}{1 - p}) = w ^ T x \\
+\text {Taking exponential}, \\
+\frac{p}{1 - p} = exp(w^Tx) \\
+p = (1 - p)exp(w^Tx) \\
+p = exp(w^Tx) - p.exp(w^Tx) \\
+p + p.exp(w^Tx) = exp(w^Tx) \\
+p(1 + exp(w^Tx)) = exp(w^Tx) \\
+p = \frac{exp(w^Tx)}{1 + exp(w^Tx)} \\
+\text{OR} \\
+p = \frac{1}{1 + exp(-w^Tx)}$$
 
+## Q2.
+```{r, results='hide', fig.keep='all'}
+sigmoid <- function(z) {
+  S_z <- 1 / (1 + exp(-z))
+  return(S_z)
+}
 
+z <- seq(-10, 10, 0.1)
 
+temp_df <- data.frame(z = seq(-10, 10, 0.1)) %>%
+  mutate(S_z = map_dbl(z, sigmoid))
 
+ggplot(temp_df, aes(x = z, y = S_z)) +
+  geom_line(color = "blue") +
+  labs(y = 'S(z)')
+  theme_bw()
+```
 
+## Q3.
+```{r}
+logistic_model <- glmnet(x = hawks_train_x %>% as.matrix(), 
+                         y = hawks_train_y, 
+                         family = 'gaussian',
+                         alpha = 0,
+                         lambda = 0)
+```
 
+```{r}
+logistic_train_predicted_y <- predict(logistic_model, hawks_train_x %>%
+                                        as.matrix(),
+                                      type = 'class') %>%
+  as.integer()
+logistic_train_error <- mean(abs(logistic_train_predicted_y - hawks_train_y))
 
+logistic_train_error
+```
 
+```{r}
+logistic_test_predicted_y <- predict(logistic_model, hawks_test_x %>%
+                                       as.matrix(),
+                                     type = 'class') %>%
+  as.integer()
 
+logistic_test_error <- mean(abs(logistic_test_predicted_y - hawks_test_y))
 
+logistic_test_error
+```
 
+# 3. Basic concepts in regularisation
+## Q1.
+### **1. Hyper-parameter:**\
+Hyper-parameters are parameters whose values control the learning process and determine the values of model parameters that a learning algorithm ends up learning. They are used to to control the learning process and the model parameters that result from it.\
+Learning rate & number of epochs are examples of hyper-parameters.\
 
+### **2. Validation data:**\
+A validation dataset is a sample of data held back from training your model that is used to give an estimate of model skill while tuning model’s hyper-parameters. \
+It is used to give an unbiased estimate of the skill of the final tuned model when comparing or selecting between final models. \
 
+### **3. The train-validation-test split:**\
+The train-test-validation-test split is a technique to evaluate the performance of a machine learning model. A given dataset is divided into three subsets for different purposes.\
+Train datset is used to train the model initially. \
+Validation dataset is used to provide an unbiased evaluation of a model fitted on the training dataset while tuning hyper-parameters.\
+Whereas, test dataset is used to provide an unbiased evaluation of a final model fitted on the training dataset.\
+  
 
+## Q2.
+**$l_2$ norm:**\
+The Euclidean norm of a vector which is a point on a line, surface, or hyper-surface may be interpreted geometrically as the distance between this point and the origin.\
+$$||x||_2 = \sqrt{x_1^2 + x_2^2 + x_3^2 + ... +x_n^2}$$
+**$l_1 norm:$**\
+$l_1$ norm is also known as "Manhattan Distance or Taxicab norm." It is the sum of the magnitudes of the vectors in a space i.e. sum of absolute difference of the components of vectors. \
+$$||x||_1 = |x_1| + |x_2| + |x_3| + ... + |x_n|$$
 
+## Q3.
+**Lasso Regression Regularization:**\
+It is a shrinkage technique. It stands for Least Absolute Shrinkage and Selection Operator. It is used over regression methods for a more accurate prediction. This model uses shrinkage.  Shrinkage is where data values are shrunk towards a central point as the mean. The lasso procedure encourages simple, sparse models (i.e. models with fewer parameters).\
 
+$$L_{lasso}(\hat{\beta}) = \sum_{i=1}^{n}(y_i - x_i\hat{\beta})^2 + \lambda \sum_{j = 1}^{m}|\hat{\beta_j}|$$
+**Ridge Regression:**\
+Similar to the lasso regression, ridge regression puts a similar constraint on the coefficients by introducing a penalty factor. However, while lasso regression takes the magnitude of the coefficients, ridge regression takes the square.\
+$$L_{hridge}(\hat{\beta}) = \sum_{i = 1}^{n}(y_i - x_i \hat{\beta})^2 + \lambda \sum_{j = 1}^{m} w_j \hat{\beta_j}^2$$
+Ridge regression is also referred to as L2 Regularization.
 
+# 4. An investigation into ridge regression for high-dimensional regression
+
+```{r}
+data(MeltingPoint)
+```
+
+```{r}
+mp_data_total <- MP_Descriptors %>% 
+  mutate(melting_pt=MP_Outcome)
+```
+
+There are **203** variables in the **mp_data_total** data frame. And there are **4401** examples.\
+
+## Q2.
+```{r}
+spec = c(train = .5, test = .25, val = .25)
+
+g = sample(cut(
+  seq(nrow(mp_data_total)), 
+  nrow(mp_data_total) * cumsum(c(0, spec)),
+  labels = names(spec)
+))
+
+res <- split(mp_data_total, g)
+
+mp_data_train <- res$train
+mp_data_test <- res$test
+mp_data_val <- res$val
+```
+
+## Q3.
+```{r}
+val_error_calculator <- function(train_data, val_data, ld) {
+  
+  train_x <- train_data %>% 
+    dplyr::select(-melting_pt)
+  
+  train_y <- train_data %>% 
+    pull(melting_pt)
+  
+  val_x <- val_data %>% 
+    dplyr::select(-melting_pt)
+  
+  val_y <- val_data %>% 
+    pull(melting_pt)
+  
+  logistic_model <- glmnet(x = train_x %>% as.matrix(), 
+                         y = train_y, 
+                         family = 'gaussian',
+                         alpha = 1,
+                         lambda = ld)
+  
+  logistic_val_predicted_y <- predict(logistic_model, val_x %>%
+                                         as.matrix(),
+                                       type = 'class') %>%
+    as.integer()
+
+  logistic_val_error <- mean(abs(logistic_val_predicted_y - val_y))
+  
+  return(logistic_val_error)
+}
+
+val_error_calculator(mp_data_train, mp_data_val, 0.1)
+
+```
+## Q4.
+```{r}
+mySeq <- seq(0, 70)
+lambdas <- c()
+for (i in mySeq) {
+  temp <- (1.25 ^ i) * (10 ^ -5)
+  lambdas <- c(lambdas, temp)
+}
+
+lambdas
+```
+
+## Q5.
+```{r}
+df <- data.frame(lambda = lambdas) %>%
+  mutate(mse = map_dbl(.x = lambda, .f = ~val_error_calculator(mp_data_train, mp_data_test, .x)))
+```
+
+## Q6.
+```{r}
+ggplot(df, aes(x = lambda, y = mse)) +
+  geom_point() +
+  scale_x_log10() +
+  theme_bw()
+```
+## Q7.
+```{r}
+df[which.min(df$mse), ]
+
+val_error_calculator(mp_data_train, mp_data_test, 0.0385186)
+```
 
 
 
