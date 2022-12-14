@@ -1,0 +1,69 @@
+---
+title: "Assignment 11"
+author: "Vishal"
+date: "2022-12-14"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(glmnet)
+```
+
+# 1. Ridge regression with random feature mappings
+## Q1.
+
+```{r}
+rdata <- read.csv("rdata_EMATM0061.csv")
+head(rdata)
+```
+
+
+```{r}
+ggplot(rdata, aes(x = x, y = y)) +
+  geom_point() +
+  theme_bw()
+```
+## Q2.
+```{r}
+spec = c(train = .5, test = .25, val = .25)
+
+g = sample(cut(
+  seq(nrow(rdata)), 
+  nrow(rdata) * cumsum(c(0, spec)),
+  labels = names(spec)
+))
+
+res <- split(rdata, g)
+
+rdata_train <- res$train
+rdata_test <- res$test
+rdata_val <- res$val
+```
+
+## Q3.
+```{r}
+linear_reg <- lm(y ~ x, data = rdata_train)
+summary(linear_reg)
+```
+
+```{r}
+ggplot(rdata_train, aes(x = x, y = y)) +
+  geom_point() +
+  stat_smooth(method = "lm", col = "red") +
+  theme_bw()
+  
+```
+```{r}
+ridge_reg <- glmnet(x = rdata_train$x %>% as.matrix(), 
+                         y = rdata_train$y, 
+                         family = 'binomial',
+                         alpha = 0,
+                         lambda = 10)
+```
+
