@@ -6,7 +6,7 @@ output: pdf_document # you can change to other output format if you want
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE) 
 ```
 
 # 1. Conditional probability, Bayes rule and independence

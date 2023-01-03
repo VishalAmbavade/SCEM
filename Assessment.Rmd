@@ -1,0 +1,503 @@
+---
+title: "Assessment"
+author: "Vishal"
+date: "2022-12-14"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(boot)
+set.seed(147)
+```
+
+## Section B
+### B.1
+
+#### (1)
+Let's consider,
+$$
+\mathrm{p} = \text{probability that light bulb comes from line A}\\
+\mathrm{p_A} = \text{probability that the light bulb has a lifetime equal to or greater than 2 years given it is produced in Line A}\\
+\mathrm{p_B} = \text{probability that the light bulb has a lifetime equal to or greater than 2 yeas given it is produced in Line B}\\
+\alpha = \text{probability that the light bulb is made in line B, given that it's lifetime is less than 2 years.}\\
+$$
+
+We need to calculate the probability that the light bulb is manufactured from line B, provided it's lifetime is less than 2 years. i.e. $\alpha$. \
+
+Let's assume that $\mathrm{p_D} = \text{probability that light bulb has life time less than 2 years.}$ \
+
+So, $\alpha = \mathbb{P}(B|D) \text{ i.e. probability that the light bulb is made in line B, given that it's lifetime is less than 2 years.}$\
+
+We know that,
+$$
+\alpha = \mathbb{P}(B|D) \Rightarrow \frac{\mathbb{P}(B \cap D)}{\mathbb{P}(D)}
+$$
+
+$$
+\Rightarrow \frac{\mathbb{P}(B) \mathbb{P}(D|B)}{\mathbb{P}(A)\mathbb{P}(D|A) + \mathbb{P}(B)\mathbb{P}(D|B)}
+$$
+
+$$
+\Rightarrow \boxed{\frac{(1-\mathrm{p})(1 - \mathrm{p_B})}{\mathrm{p}(1 - \mathrm{p_A}) + (1 - \mathrm{p})(1 - \mathrm{p_B})}} \tag{1}
+$$
+
+#### (2)
+We have,\
+$$
+\mathrm{p_A} = 0.99\\
+\mathrm{p_B} = 0.5\\
+\mathrm{p} = 0.1
+$$
+
+And we need to calculate $\alpha$. Using equation (1), we get,\
+$$
+\Rightarrow \frac{(1-\mathrm{p})(1 - \mathrm{p_B})}{\mathrm{p}(1 - \mathrm{p_A}) + (1 - \mathrm{p})(1 - \mathrm{p_B})} \\
+\Rightarrow \frac{(1 - 0.1)(1 - 0.5)}{0.1(1 - 0.99) + (1 - 0.1)(1 - 0.5)}\\
+\Rightarrow \frac{0.9 * 0.5}{0.1*0.01 + 0.9*0.5} \\
+\Rightarrow \frac{0.45}{0.451} \\
+\Rightarrow \boxed{0.9977827}
+$$
+
+#### (3)
+```{r}
+n <- 100000
+ df <- data.frame(Line = sample(c(0, 1), 100000, prob = c(0.1, 0.9), replace = T)) %>%
+  mutate(LessThan2Years = case_when(Line == 0 ~sample(c(0, 1), n, prob = c(0.99, 0.01), replace = TRUE),
+                                    (Line == 1 ~sample(c(0, 1), n, prob = c(0.5, 0.5), replace = TRUE))))
+```
+
+#### (4)
+```{r}
+lessThan2YearsDf <- df %>%
+  filter(LessThan2Years == 1) 
+
+lessThan2YearsLine1 <- lessThan2YearsDf %>%
+  filter(Line == 1) %>%
+  count()
+
+alpha = lessThan2YearsLine1 / length(lessThan2YearsDf$Line)
+print(round(alpha, 5))
+```
+$\text{The estimated value of } \alpha \text{ is}$ `r round(alpha, 5)`.
+
+
+## B.2
+Let,
+$$
+X = \text{continuous random variable} \\
+X = 0, \text{product gets on the shelf immediately after it is sold out}
+$$
+
+We have PDF given as,
+$$
+\nonumber \mathrm{p_\lambda}(x) = \left\{
+\begin{array}{l l}
+ae^{-\lambda (x - b)} & \quad x \geq b\\
+0 & \quad \textrm{if } x < b
+\end{array} \right.
+$$
+where,
+$$
+b > 0 \text{ is a known constant}\\
+\lambda > 0 \text{ is a parameter of the distribution}
+$$
+
+The given probability density function is a **memoryless** form of the exponential distribution function meaning, the distribution of time between restocking the shelves is the same as at time zero.\
+So the function is similar as,\
+
+$$
+\nonumber \mathrm{p_\lambda}(x) = \left\{
+\begin{array}{l l}
+ae^{-\lambda (x - b)} & \quad x > 0\\
+0 & \quad otherwise
+\end{array} \right.
+$$
+
+Integrating this function, we will get,
+$$
+\mathrm{p_\lambda}(x) =  -\dfrac{a\mathrm{e}^{-\lambda\cdot\left(x-b\right)}}{\lambda}\\
+$$
+
+$$
+\Rightarrow \dfrac{a\cdot\left(\mathrm{e}^{b\lambda}-1\right)}{\lambda}
+\tag{1}
+$$
+
+#### (1)\
+
+To derive the value of $a$, we need to integrate the function while the value is 1. \
+From equation (1), we have,
+
+$$
+\int_{b}^{\infty}
+\mathrm{p_\lambda}(x) = \int_{b}^{\infty}ae^{-\lambda (x - b)} \\
+\text{substituting } u = -\lambda\cdot(x - b) \rightarrow \frac{du}{dx} = -\lambda \rightarrow dx = \frac{1}{\lambda}du \\
+= -\frac{a}{\lambda}\int e^u du \\
+\text{now solving:} \\
+\int e^ u du \\
+\text {Applying exponential rule:} \\
+\int a^u du = \frac{a^u}{\ln(a)} \text{with a = e} \\
+= e ^ u \\
+\text{Plugging in solved integrals,} \\
+-\frac{a}{\lambda}\int e^u du \\
+= -\frac{ae^u}{\lambda} \\
+\text{Undoing substitution: } u = -\lambda\cdot(x - b) \\
+= -\frac{ae^{-\lambda(x - b)}}{\lambda} \\
+\text{Integrating in the given bounds,}\\
+\Rightarrow \boxed {\frac{a}{\lambda}} \\
+1 = \frac{a}{\lambda} \\
+\boxed{a = \lambda} 
+$$
+
+#### 2\
+**Population mean: **\
+We'll be using integration by parts to find the population mean.\
+$$
+EX = \int_{b}^{\infty} a e^{- \lambda (x - b)}xdx
+$$
+
+$$
+\Rightarrow aeb^{\lambda} \int_{b}^{\infty} xe^{-\lambda x}dx \\
+\Rightarrow \frac{a\cdot(b \lambda + 1)}{\lambda ^ 2} \\
+\text{Substituting } a = \lambda, \\
+\Rightarrow \frac{\lambda \cdot (b \lambda + 1)}{\lambda ^ 2} \\
+\Rightarrow \boxed{\frac{b \lambda + 1}{\lambda}}
+$$
+
+**Standard Deviation: **\
+$$
+\sigma^2 = E(X - \mu) ^ 2 \\
+\Rightarrow E(X - E(X)^ 2)  \\
+\Rightarrow E\Biggl(X - \Biggl(\frac{b\lambda + 1}{\lambda}\Biggr)^2\Biggr)\\
+\Rightarrow \int_{b}^{\infty}\Biggl(z - \frac{b\lambda + 1}{\lambda}\Biggr)^2ae^{-\lambda(z - b)}dz \\
+\Rightarrow \Biggl[-\dfrac{a\cdot\left({\lambda}^2\cdot\left(z-b\right)^2+1\right)\mathrm{e}^{-{\lambda}\cdot\left(z-b\right)}}{{\lambda}^3}\Biggr]_{b}^{\infty} \\
+\Rightarrow \frac{a}{\lambda ^3} \\
+\text{Substituting } a = \lambda\\
+\Rightarrow \boxed{\frac{1}{\lambda^2}}
+$$
+
+#### (3)
+
+**Cumulative Distribution function: **
+$$
+\int_{-\infty}^{x}f(t)dt = \int_{-\infty}^{b}f(t)dt + \int_{b}^{x}f(t)dt\\
+\Rightarrow \int_{-\infty}^{b}0dt + \int_{b}^{x}ae^{-\lambda(t - b)}dt\\
+\Rightarrow \Biggl[-\dfrac{a\mathrm{e}^{-{\lambda}\cdot\left(t-b\right)}}{{\lambda}}\Biggr]_{b}^{x} \\
+\Rightarrow \dfrac{a\cdot\left(1-\mathrm{e}^{b{\lambda}-x{\lambda}}\right)}{{\lambda}} \\
+\text{Since } a = \lambda, \\
+\Rightarrow \boxed{1-\mathrm{e}^{{\lambda}(x-b)}}
+$$
+
+**Quantile function:** \
+The quantile function $\mathrm{Q_X}(p)$ is defined as the smallest $x$ such that ${F_X}(x) = p$
+
+$$
+Q_X(p) = min{\{x \in \mathbb{R} | F_X(x) = p\}} \tag{a}
+$$
+
+Thus we have $Q_X(p) = -\infty, \text{ if } p = 0. \text{ When } p > 0, \text{ it holds that }$,
+
+$$
+Q_X(p) = F_X^{-1}(x) \tag{b}
+$$
+
+Arranging the probability density function we get,
+$$
+p = 1-\mathrm{e}^{{\lambda}(x-b)} \\
+\Rightarrow 1 - p = \mathrm{e}^{{\lambda}(x-b)}\\
+\Rightarrow \ln(1 - p) = \lambda(x-b)\\
+\Rightarrow \ln(1 - p) = \lambda x - \lambda b\\
+\Rightarrow \ln(1 - p) + \lambda b = \lambda x\\
+\Rightarrow \boxed{x = \frac{\ln(1 - p) + \lambda b}{\lambda}}\\
+$$
+
+#### (4)
+
+**Maximum Likelihood Estimate: **\
+
+$$
+\lambda_{MLE} = \prod_{i = 1}^{n}f_X(x_i; \lambda) = \prod_{i = 1}^{n} \bigl\{{ae^{-\lambda(x_i - b)}}\bigr\} \\
+L(\lambda) = ae^{-n\lambda((x_1 + x_2 + ... + x_n) - b)} \\
+\log L(\lambda) = \log (a) - \lambda \sum_{i = 1}^{n}x log(e) + \lambda b \log(e) \\
+\text{Substituting } \lambda \text{ in place of } a\\
+\log L(\lambda) = \log (\lambda) - \lambda \sum_{i = 1}^{n}x log(e) + \lambda b \log(e) \\
+\text{Taking derivative on both sides,} \\
+\frac{d}{d\lambda} \{\log L(\lambda)\} = \frac{d}{d\lambda} \{\log (\lambda) - \lambda \sum_{i = 1}^{n} x log(e) + \lambda b \log(e)\} \\
+0 = \frac{1}{\lambda} - \bar{x} + b \\
+\frac{1}{\lambda} = \bar x - b \\
+\boxed{\lambda = \frac{1}{\bar x - b}}\\
+$$
+
+
+```{r}
+supermarketDataDf <- read.csv("supermarket_data_EMATM0061.csv")
+head(supermarketDataDf)
+```
+#### (5)
+
+To calculate the MLE, we know that log MLE for the given function is $\frac{1}{b - \bar x}$.
+
+```{r}
+b = 300
+MLE = 1 / (mean(supermarketDataDf$TimeLength) - b)
+MLE
+```
+
+#### (6)
+```{r}
+compute_median <- function(df, indices, col_name) {
+  sub_sample <- slice(df, indices) %>% 
+    pull(all_of(col_name))
+  return(median(sub_sample, na.rm = T))
+}
+```
+
+```{r}
+results <- boot(data = supermarketDataDf, statistic = compute_median, col_name = "TimeLength", R = 10000)
+
+boot.ci(boot.out = results, type = "perc", conf = 0.95)
+```
+
+#### (7)
+```{r}
+b = 0.01
+lambda_0 = 2
+sample_size_seq <- seq(100, 5000, 10)
+num_trials_per_size <- 100
+
+compute_mle <- function(x, b) {
+  return (1 / (mean(x) - b))
+}
+
+df <- crossing(sample_size = sample_size_seq, trials = seq(num_trials_per_size)) %>%
+  mutate(samples = map(sample_size, ~rexp(.x, lambda_0))) %>%
+  mutate(lambda_mle = map_dbl(samples, ~compute_mle(.x, b)))
+
+
+df_mse <- df %>%
+  group_by(sample_size) %>%
+  summarise(mse = mean((lambda_mle - lambda_0) ^ 2))
+
+ggplot(df_mse) +
+  geom_line(aes(x = sample_size, y = mse)) +
+  theme_bw() +
+  xlab('Sample size')
+```
+
+
+
+## B.3
+
+#### (1)
+**Probability Mass Function: ** \
+$$
+\text{The probability mass function } \mathrm{p_X} : \mathbb{R} \rightarrow[0, 1] \text{ is defined by}\\ 
+\mathrm{p_X}(x):= P_X (\{x\}) = \mathbb{P}(X = x)\\
+\text{where } \mathrm{p_X} \text{ is the distribution of } X.
+$$
+
+$$
+a = \text{number of red balls in a bag}\\
+b = \text{number of blue balls in a bag}\\
+a + b = \text{total number of balls in a bag}\\
+X = \text{number of red balls drawn - number of blue balls}
+$$
+As we are drawing only two balls from the bag, our random variable can take on 2 possible values. From the drawing of 2 red balls and 0 blue ball, we can end up with possible value of 2. Whereas, if we draw 1 red ball and 1 blue ball, we will end up the possible value of 0 for our random variable X. \
+
+Thus we can have $X = 0$ and $X = 2$.
+
+Now we should calculate the probability of each possible value of X. There are total $a + b$ balls, and we are picking 2 without replacement. Thus, there are $\binom{a + b}{2}$ total ways to draw 2 balls without replacement from the bag. There are $a$ red balls and $b$ blue balls. The probabilities are calculated as follows: \
+
+$$
+\text{For } X = 0: \text{We will have 1 red ball and 1 blue ball. Thus } P(X = 0) = \frac{\dbinom{a}{1}\dbinom{b}{1}}{\dbinom{a + b}{2}} \\
+\text{For } X = 2: \text{We will have 2 red balls and 0 blue balls. Thus } P(X = 2) = \frac{\dbinom{a}{2}\dbinom{b}{0}}{\dbinom{a + b}{2}} \\
+\text{For } X = -2: \text{We will have 2 blue balls and 0 red balls. Thus } P(X = -2) = \frac{\dbinom{a}{0}\dbinom{b}{2}}{\dbinom{a + b}{2}} \\
+$$
+
+$$
+\sum_{x} P_x(X) = P(X = 0) + P(X = 2) + P(X = -2) \\
+\Rightarrow \frac{\dbinom{a}{1}\dbinom{b}{1}}{\dbinom{a + b}{2}} + 
+\frac{\dbinom{a}{2}\dbinom{b}{0}}{\dbinom{a + b}{2}} +
+\frac{\dbinom{a}{0}\dbinom{b}{2}}{\dbinom{a + b}{2}} \\
+\Rightarrow \frac{\dbinom{a}{1}\dbinom{b}{1} + \dbinom{a}{2}\dbinom{b}{0} + 
+\dbinom{a}{0}\dbinom{b}{2}
+}{\dbinom{a + b}{2}} \\
+\Rightarrow \boxed{\frac{\Biggl(\frac{a!}{(a-1)!} *\frac{b!}{(b-1)!}\Biggr) + \Biggl({\frac{a!}{2(a-2)!}}\Biggr) + \Biggl({\frac{b!}{2(b-2)!}}\Biggr)}{\Biggl(\frac{(a+b)!}{2(a + b - 2)!}\Biggr)}}
+$$
+
+We have our values of $P(X = x)$ for all possible X, and thus we have our probability mass function describing the distribution of $X$.
+
+#### (2)
+**Expectation: **\
+$$
+E(X) = \mu_x = \sum_{\text{all } x_i}(x_i)P(x_i)\\
+E(X) = (0)*\Biggl(\frac{\frac{a!}{(a-1)!} * \frac{b!}{(b - 1)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) + (2)*\Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) - (2) * \Biggl\{\frac{\frac{b!}{2(b - 2)!}}{\frac{(a + b)!}{2(a + b -2)!}} \Biggl\}\\
+E(X) = (2)*\Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) - (2) * \Biggl\{\frac{\frac{b!}{2(b - 2)!}}{\frac{(a + b)!}{2(a + b -2)!}} \Biggl\}\\
+$$
+
+
+
+#### (3)
+**Variance: **\
+$$
+\sigma^2 = Var(X) = \sum_x[x^2 \cdot p(x)] - \Bigr[\sum_x x\cdot p(x)\Bigr]^2\\
+\boxed{\sum_xx^2.p(x) = (4) * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) + (4) * \Biggl(\frac{\frac{b!}{2(b-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl)}\\
+\bigr[\sum_x x\cdot p(x)\bigr]^2 = \Biggr\{(2) * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) + (2) * \Biggl(\frac{\frac{b!}{2(b-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl)\Biggr\}^2 \\
+\Rightarrow 4 * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggr) ^ 2 + 
+8 * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) * \Biggl(\frac{\frac{b!}{2(b-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) + 
+4 * \Biggl(\frac{\frac{b!}{2(b-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggr) ^ 2\\
+\sigma^2 = Var(X) = \Biggr\{(4) * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) + (4) * \Biggl(\frac{\frac{b!}{2(b-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl)\Biggr\} - \\
+4 * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggr) ^ 2 -
+8 * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) * \Biggl(\frac{\frac{b!}{2(b-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) + 
+4 * \Biggl(\frac{\frac{b!}{2(b-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggr) ^ 2\\
+$$
+
+#### (4)
+```{r}
+compute_expectation_X <- function(a, b) {
+  xpx <- (2 * choose(a, 2) / choose(a + b, 2)) - (2 * choose(b, 2) / choose(a + b, 2))
+  return(xpx)
+}
+
+compute_variance_X <- function(a, b) {
+  variance <- 
+     (((4 * choose(a, 2) / choose(a + b, 2)) + (4 * choose(b, 2) / choose(a + b, 2))) - 
+    (((2 * (choose(a, 2) / choose(a + b, 2))) ^ 2) - (8 * (choose(a, 2) / choose(a + b, 2)) * (choose(b, 2) / choose(a + b, 2))) +
+    ((2 * (choose(b, 2) / choose(a + b, 2))) ^ 2)))
+    
+  return(variance)
+}
+
+compute_variance_X(3, 5)
+```
+
+#### (5)
+
+We know that, X can take only 2 values i.e. 0 and 2. Although, we are not considering the event where we pick 2 blue balls and 0 red balls. 
+
+
+$$
+\bar X = \frac{1}{n} \sum_{i = 1}^{n} X \\
+$$
+
+Since, $X$ takes only two values 0 and 2 with equal chance of occurrence, if we repeat the experiment n times, the mean will be equal to 1. \
+Therefore, the expectation will be,
+
+$$
+Expectation = E(\bar X) = (1)*\Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl)\\   
+$$
+
+#### (6)
+$$
+Variance = \sigma_{\bar{X}}^2=\frac{\sum_i \sigma_i^2 + 2 \sum_i \sum_{j<i} cov(X_i, X_j)}{n^2} \\
+\text{where n = number of independent copies of X}\\
+\text{Since all }X_i \text{ are independent, the covariances are zero and the formula simplifies to,}\\
+\sigma_{\bar{X}}^2=\frac{\sum_i \sigma_i^2 }{n^2} \\
+\text{If the } X_i \text{ are all independent have the same variance } \sigma \text{then the formula becomes},\\
+\sigma_{\bar{X}}^2=\frac{\sum_i \sigma ^2}{n^2}=\frac{n \sigma^2}{n^2}=\frac{\sigma^2}{n}\\
+\therefore \boxed {\sigma^2_{\bar X} = \frac{(4) * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl) - (4) * \Biggl(\frac{\frac{a!}{2(a-2)!}}{\frac{(a+b)!}{2(a + b - 2)!}}\Biggl)^2 \\}{n}}
+$$
+
+#### (7)
+```{r}
+sample_Xs <- function(a, b, n) {
+  prob_0 <- (choose(a, 1) * choose(b, 1)) / choose(a + b, 2)  
+  prob_2 <- (choose(a, 2) * choose(b, 0)) / choose(a + b, 2)
+  
+  prob_neg2 = (choose(a, 0) * choose(b, 2)) / choose(a + b, 2) 
+  # prob_neg2: Probability of choosing 0 red balls and 2 blue balls
+  
+  samples <- sample(c(0, 2, -2), size = n, prob = c(prob_0, prob_2, prob_neg2), replace = T)
+  return(samples)
+} 
+
+table(sample_Xs(3, 5, 100))
+```
+
+#### (8)
+```{r}
+a = 3
+b = 5
+n = 100000
+Samples <- sample_Xs(a, b, n)
+
+Expectation <- compute_expectation_X(a, b)
+Variance <- compute_variance_X(a, b)
+
+sampleMean <- mean(Samples)
+sampleVariance <- var(Samples)
+
+print(Expectation)
+print(Variance)
+print(sampleMean)
+print(sampleVariance)
+```
+The expectation calculated using the function `compute_expectation_X` is `r Expectation` whereas the sample mean is `r sampleMean`. As it is seen these two values are almost equal. That is, the sample mean and the expectation of the sample are similar.\
+
+Additionally, the variance that we got using the function `compute_variance_X` is `r Variance` and it is equal to the the variance of the sample generated and calculated using the `var` function in R i.e. `r sampleVariance`.
+
+
+#### (9)
+```{r}
+mu_0 <- Expectation
+n = 900
+sigma_0 <- sqrt(Variance / n)
+a = 3
+b = 5
+
+num_trials <- 20000
+
+simStudyDf <- data.frame(trials = rep(n, num_trials)) %>%
+  mutate(samples = map(trials, ~sample_Xs(a, b, .x))) %>%
+  mutate(sampleMean = map_dbl(samples, mean)) 
+```
+
+#### (9)
+```{r}
+mu_minus_sigma_calc <- function(mu, sig) {
+  return(mu - sig)
+}
+
+densityPlotDf <- data.frame(sigma = seq(-3 * sigma_0, 3 * sigma_0, 0.1 * sigma_0)) %>%
+  mutate(newSeq = map_dbl(sigma, ~mu_minus_sigma_calc(mu_0, .x))) %>%
+  mutate(GuassianDistr = map_dbl(.x = newSeq, ~dnorm(.x, mean = mu_0, sd = sigma_0)))
+```
+
+
+#### (10)
+```{r}
+color <- c("Adjusted mean with sd" = "red", "Kernel density" = "blue")
+
+ggplot(densityPlotDf) +
+  geom_point(aes(x = newSeq, y = GuassianDistr, color = "Adjusted mean with sd")) + 
+  geom_density(data = simStudyDf, aes(x = sampleMean, color = "Kernel density")) +
+  ylab('Values') +
+  xlab("Sample mean") +
+  scale_color_manual(values = color)
+```
+
+#### (11)
+The Kernel density of $\bar{X}$ follows the same curve as the scatter plot plotted with function $f_{\mu, \sigma}$ which is a Gaussian distribution.\
+
+In our simulation study we had a small standard deviation i.e., a very narrow peak in our plot. And that is why, it coincides with the normal distribution plot. Although, it is slightly smoother and more flexible than the normal distribution, since it is a non-parametric method that does not rely on any assumptions about the underlying distribution.\
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

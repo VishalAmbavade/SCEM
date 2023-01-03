@@ -1,0 +1,25 @@
+---
+title: "AssessmentC"
+author: "Vishal"
+date: "2022-12-24"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+set.seed(147)
+library(reticulate)
+```
+
+## Section C
+# Support  Vector Machines
+
+**What is a support vectors? **
+
+```{python}
+import pandas as pd
+import numpy as np
+
+```

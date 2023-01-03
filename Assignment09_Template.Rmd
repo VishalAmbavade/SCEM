@@ -2,7 +2,7 @@
 title: "Assignment 9"
 author: "Vishal"
 date: "2022-11-30"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE, warning=FALSE, message=FALSE}
@@ -23,27 +23,19 @@ http://ianmadd.github.io/pages/Confidence_Intervals_Part4.html
 
 
 ## 2. A chi-squared test of populatinn variance
-```{r}
-#chi_square_test_one_sample_var <- function(sample, sigma_square_null) {
-#  dataLen <- length(sample) - 1
-#  sampleVar <- var(sample)
-#  popVar <- sigma_square_null
-  
-#  res <- dataLen * (sampleVar / popVar)
-#  return(res)
-#}
-```
-
+## 2 (Q1)
 ```{r}
 chi_square_test_one_sample_var <- function(sample, sigma_square_null) {
   sample <- sample[!is.na(sample)]
   n <- length(sample)
   chi_squared_statistic <- (n - 1) * var(sample) / sigma_square_null
-  p_value <- 2 * min(pchisq(chi_squared_statistic, df = n - 1), 1 - pchisq(chi_squared_statistic, df = n - 1))
+  p_value <- 2*min(pchisq(chi_squared_statistic, df=n-1), 
+                     1-pchisq(chi_squared_statistic, df=n-1))
   return(p_value)
 }
 ```
 
+## 2 (Q2)
 ```{r}
 sample_size <- 100
 mu_0 <- 1
@@ -51,31 +43,54 @@ sigma_0 <- 4
 
 df <- data.frame(trial = seq(0.01, 0.20, 0.01)) %>%
   mutate(samples = map(.x = trial, .f = ~rnorm(n = sample_size, mean = mu_0, sd = sigma_0))) %>%
-  mutate(p_val = map_dbl(.x = samples, ~chi_square_test_one_sample_var(.x, sigma)))
+  mutate(p_val = map_dbl(.x = samples, ~chi_square_test_one_sample_var(.x, sigma_0)))
+
   
+alpha_list <- seq(0.01, 0.20, 0.01)
 
-#val <- df %>%
-#  pull(samples) %>%
-#  chi_square_test_one_sample_var(sample = ., sigma_square_null = sigma)
-df$p_val
-#df$p_val[df$p_val > 0.10]
-
-compute_p_value <- function(alpha) {
+compute_test_size <- function(alpha) {
   reject_null <- df$p_val[df$p_val < alpha]
   return (mean(reject_null))
 }
 
+multiple_alpha_test_size_simulation_df <- data.frame(significance_level = alpha_list) %>% 
+  mutate(test_size = map_dbl(significance_level, compute_test_size))
+
+
+multiple_alpha_test_size_simulation_df %>%
+  ggplot(aes(x = significance_level, y = test_size)) +
+  geom_point() +
+  theme_bw()
+
 ```
 
+## 2 (Q4)
 ```{r}
-multiple_alpha_df <- data.frame(alpha = seq(0.01, 0.20, 0.01)) %>%
-  mutate(test_size = map_dbl(alpha, compute_p_value))
+sample_size <- 100
+mu_0 <- 1
+sigma <- 6
+sigma_0 <- 4
 
-multiple_alpha_df
+df <- data.frame(trial = seq(0.01, 0.20, 0.01)) %>%
+  mutate(samples = map(.x = trial, .f = ~rnorm(n = sample_size, mean = mu_0, sd = sigma))) %>%
+  mutate(p_val = map_dbl(.x = samples, ~chi_square_test_one_sample_var(.x, sigma_0)))
 
+  
+compute_power <- function(alpha) {
+  reject_null <- df$p_val[df$p_val < alpha]
+  return (mean(reject_null))
+}
+
+multiple_alpha_power_df <- data.frame(significance_level = seq(0.01, 0.20, 0.01)) %>% 
+  mutate(power = map_dbl(significance_level, compute_power))
+
+
+multiple_alpha_power_df %>%
+  ggplot(aes(x = significance_level, y = power)) +
+  geom_point() +
+  theme_bw()         
 
 ```
-
 ## 5
 
 ```{r}
@@ -84,5 +99,13 @@ bill_adelie <- penguins %>%
   pull(bill_length_mm)
 
 bill_adelie <- bill_adelie[!is.na(bill_adelie)]
-bill_adelie
+#chi_square_test_one_sample_var(bill_adelie, 9)
+
+temp_df <- data.frame(trail = seq(length(bill_adelie))) %>%
+  mutate(sample = map(.x = trail, ~rnorm(n = length(bill_adelie), 1, 0))) %>%
+  mutate(bill_adelie = bill_adelie) %>%
+  mutate(p_val = map_dbl(.x = sample, ~chi_square_test_one_sample_var(.x, 9)))
+  
+
+head(temp_df)
 ```

@@ -1,0 +1,127 @@
+---
+title: "AssesmentA"
+author: "Vishal"
+date: "2022-12-24"
+output: html_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+```
+
+### A.1
+```{r}
+data_original <- read.csv("finance_data_2022.csv")
+data_dims <- dim(data_original)
+data_dims
+```
+There are `r data_dims[1]` rows and `r data_dims[2]` columns in the given data set.
+
+### A.2
+```{r}
+finance_data <- data_original %>%
+  select(-c("Number.of.enterprises", "TOTAL", "Fiscal.Year")) %>%
+  rename("IFC" = "IFC.Region", 
+         "IFC_CC" = "IFC.Cumulative.Commitments..US..Thousands.",
+         "Country" = "Country",
+         "Loan_Guarantee_CC" = "Loan...Guarantee.participations.Cumulative.Commitments..US..Thousands.",
+         "Date" = "As.of.Date") %>%
+  relocate(Country, .after = IFC_CC)
+
+head(finance_data)
+```
+### A.3
+```{r}
+data_part1 <- finance_data %>%
+  filter(IFC_CC > 300000 & Loan_Guarantee_CC < 500000) %>%
+  arrange(desc(IFC_CC))
+
+data_part1[1:4, c("IFC", "IFC_CC", "Loan_Guarantee_CC")]
+```
+
+### A.4
+```{r}
+finance_data <- finance_data %>%
+  mutate(IFC_ratio = IFC_CC / (IFC_CC + Loan_Guarantee_CC))
+
+finance_data[1:5, c("IFC", "IFC_CC", "Loan_Guarantee_CC", "IFC_ratio")]
+```
+### A.5
+```{r}
+#finance_data$Date <- format(as.Date(finance_data$Date, "%m/%d/%Y"), "%m-%m-%d")
+finance_data <- finance_data %>%
+  mutate(day = as.integer(format(as.Date(finance_data$Date, "%m/%d/%Y"), "%d")),
+         month = as.integer(format(as.Date(finance_data$Date, "%m/%d/%Y"), "%m")),
+         year = as.integer(format(as.Date(finance_data$Date, "%m/%d/%Y"), "%Y"))) %>%
+  select(-c(Date))
+
+finance_data[1:5, c("IFC_CC", "day", "month", "year")]
+```
+
+### A.6
+```{r}
+summary_data <- finance_data %>%
+  group_by(IFC) %>%
+  summarise(ifc_mn = mean(IFC_CC, na.rm = T),
+            ifc_21q = quantile(IFC_CC, 0.21, na.rm = T),
+            ifc_var = var(IFC_CC, na.rm = T),
+            lg_mn = mean(Loan_Guarantee_CC, na.rm = T),
+            lg_21q = quantile(Loan_Guarantee_CC, 0.21, na.rm = T),
+            lg_var = var(Loan_Guarantee_CC, na.rm = T))
+
+summary_data
+```
+
+### A.7
+```{r}
+
+countriesToConsider <- c("Argentina", "Brazil")
+scaleYear <- function(x) {return(x %% 2000)}
+scaleMillion <- function(y) {return(y / 1e3)}
+
+finance_data %>%
+  filter(Country %in% countriesToConsider) %>%
+  select(c("Country", "IFC_CC", "Loan_Guarantee_CC", "year")) %>%
+  pivot_longer(!c(year, Country), names_to = "names", values_to = "values") %>%
+
+
+  ggplot(aes(x = year, y = values, color = names)) +
+  geom_point() +
+  scale_x_continuous(labels = scaleYear) +
+  scale_y_continuous(labels = scaleMillion) +
+  facet_grid(cols = vars(Country)) +
+  labs(y = "Cumulative Commitments (million $)") +
+  theme_bw()
+```
+
+### A.8
+```{r}
+impute_by_quantile <- function(x) {
+  q <- quantile(unlist(x), 0.9, na.rm = T)
+  x[is.na(x)] <- q
+  return(x)
+}
+
+
+finance_data$IFC_CC <- impute_by_quantile(finance_data$IFC_CC)
+finance_data$Loan_Guarantee_CC <- impute_by_quantile(finance_data$Loan_Guarantee_CC)
+finance_data$IFC_ratio <- impute_by_quantile(finance_data$IFC_ratio)
+
+
+finance_data %>%
+  summarise(IFC_CC = mean(IFC_CC),
+            Loan_Guarantee_CC = mean(Loan_Guarantee_CC),
+            IFC_ratio = mean(IFC_ratio))
+```
+
+
+
+
+
+
+
+
+
+

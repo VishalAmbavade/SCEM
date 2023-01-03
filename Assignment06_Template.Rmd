@@ -2,7 +2,7 @@
 title: "Assignment 6"
 author: "Vishal"
 date: "2022-11-09"
-output: pdf_document # you can change to other output format if you want
+output: html_document # you can change to other output format if you want
 ---
 
 ```{r setup, include=FALSE}
